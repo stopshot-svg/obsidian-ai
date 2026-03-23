@@ -557,9 +557,22 @@ export class TabManager implements TabManagerInterface {
    * @returns Array of SDK commands, or empty array if no service is ready.
    */
   async getSdkCommands(): Promise<SlashCommand[]> {
-    // Find any tab with a ready service
+    const activeTab = this.getActiveTab();
+    const activeProvider = activeTab?.serviceProviderId
+      ?? (activeTab?.conversationId
+        ? this.plugin.getConversationSync(activeTab.conversationId)?.provider
+        : null)
+      ?? this.plugin.getActiveProviderId?.()
+      ?? this.plugin.settings.provider
+      ?? 'claude';
+
+    const providerDescriptor = this.plugin.providerManager?.getDescriptor?.(activeProvider);
+    if (providerDescriptor && !providerDescriptor.capabilities.slashCommands) {
+      return [];
+    }
+
     for (const tab of this.tabs.values()) {
-      if (tab.service?.isReady()) {
+      if (tab.service?.isReady() && (tab.serviceProviderId ?? activeProvider) === activeProvider) {
         return tab.service.getSupportedCommands();
       }
     }

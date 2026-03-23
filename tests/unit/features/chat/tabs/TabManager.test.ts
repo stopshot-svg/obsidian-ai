@@ -45,10 +45,29 @@ function createMockPlugin(overrides: Record<string, any> = {}): any {
       },
     },
     settings: {
+      provider: 'claude',
       maxTabs: DEFAULT_MAX_TABS,
       ...(overrides.settings || {}),
     },
+    providerManager: {
+      getDescriptor: jest.fn((providerId: string) => ({
+        id: providerId,
+        label: providerId === 'codex' ? 'Codex' : 'Claude',
+        status: providerId === 'codex' ? 'experimental' : 'stable',
+        description: '',
+        capabilities: {
+          inlineEdit: providerId !== 'codex',
+          instructionRefine: providerId !== 'codex',
+          mcp: providerId !== 'codex',
+          persistentConversation: true,
+          slashCommands: providerId !== 'codex',
+          titleGeneration: providerId !== 'codex',
+        },
+      })),
+    },
+    getActiveProviderId: jest.fn(function(this: any) { return this.settings.provider ?? 'claude'; }),
     getConversationById: jest.fn().mockResolvedValue(null),
+    getConversationSync: jest.fn().mockReturnValue(null),
     getConversationList: jest.fn().mockReturnValue([]),
     findConversationAcrossViews: jest.fn().mockReturnValue(null),
     ...overrides,
@@ -92,6 +111,7 @@ function createMockTabData(overrides: Record<string, any> = {}): any {
     id: `tab-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
     conversationId: null,
     service: null,
+    serviceProviderId: null,
     serviceInitialized: false,
     state: {
       ...defaultState,
@@ -738,6 +758,58 @@ describe('TabManager - Broadcast', () => {
       // Should only be called for the 2 initialized tabs, not the 3rd
       expect(broadcastFn).toHaveBeenCalledTimes(2);
     });
+  });
+});
+
+describe('TabManager - SDK Commands', () => {
+  it('returns no sdk commands for codex provider', async () => {
+    const manager = createManager({
+      plugin: createMockPlugin({
+        settings: {
+          provider: 'codex',
+        },
+      }),
+      tabFactory: () => createMockTabData({
+        id: 'codex-tab',
+        serviceProviderId: 'codex',
+        service: {
+          isReady: jest.fn().mockReturnValue(true),
+          getSupportedCommands: jest.fn().mockResolvedValue([{ id: 'sdk:test' }]),
+        },
+        serviceInitialized: true,
+      }),
+    });
+
+    await manager.createTab();
+    const commands = await manager.getSdkCommands();
+
+    expect(commands).toEqual([]);
+  });
+
+  it('returns commands from matching provider service', async () => {
+    const getSupportedCommands = jest.fn().mockResolvedValue([{ id: 'sdk:test', name: 'test' }]);
+    const manager = createManager({
+      plugin: createMockPlugin({
+        settings: {
+          provider: 'claude',
+        },
+      }),
+      tabFactory: () => createMockTabData({
+        id: 'claude-tab',
+        serviceProviderId: 'claude',
+        service: {
+          isReady: jest.fn().mockReturnValue(true),
+          getSupportedCommands,
+        },
+        serviceInitialized: true,
+      }),
+    });
+
+    await manager.createTab();
+    const commands = await manager.getSdkCommands();
+
+    expect(getSupportedCommands).toHaveBeenCalled();
+    expect(commands).toEqual([{ id: 'sdk:test', name: 'test' }]);
   });
 });
 
