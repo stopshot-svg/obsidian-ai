@@ -36,7 +36,7 @@ export const PROVIDER_DESCRIPTORS: Record<ProviderId, ProviderDescriptor> = {
     id: 'codex',
     label: 'Codex',
     status: 'experimental',
-    description: 'Upcoming alternate runtime with matching Obsidian UI.',
+    description: 'OpenAI/Codex runtime using the same Obsidian UI, with Ask/Auto approvals and optional Codex CLI-managed model selection.',
     capabilities: {
       inlineEdit: true,
       instructionRefine: true,

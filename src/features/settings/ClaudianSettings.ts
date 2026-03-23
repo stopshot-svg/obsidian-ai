@@ -165,15 +165,15 @@ export class ClaudianSettingTab extends PluginSettingTab {
       codexSupportHint.style.color = 'var(--text-warning)';
       codexSupportHint.style.marginTop = '-0.2em';
       codexSupportHint.style.marginBottom = '0.8em';
-      codexSupportHint.setText('Current Codex support: chat, inline edit, instruction mode, external directories, images, command/tool stream, AI title generation. MCP and Claude SDK slash commands are not wired yet.');
+      codexSupportHint.setText('Current Codex support: chat, inline edit, instruction mode, external directories, images, command/tool stream, AI title generation, Ask/Auto approvals, and CLI-managed model selection. MCP and Claude SDK slash commands are not wired yet.');
     }
 
     new Setting(containerEl)
       .setName('Codex model')
-      .setDesc('Optional model ID for Codex. Leave empty to use the Codex CLI default.')
+      .setDesc('Optional model ID for Codex. Leave empty to let your local Codex CLI configuration choose the model.')
       .addText((text) => {
         text
-          .setPlaceholder('gpt-5-codex')
+          .setPlaceholder('gpt-5.4')
           .setValue(this.plugin.settings.codexModel || '')
           .onChange(async (value) => {
             this.plugin.settings.codexModel = value.trim();
