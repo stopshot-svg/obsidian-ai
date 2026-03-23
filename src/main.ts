@@ -430,6 +430,7 @@ export default class ClaudianPlugin extends Plugin {
       conversation.createdAt = meta.createdAt ?? conversation.createdAt;
       conversation.updatedAt = meta.updatedAt ?? conversation.updatedAt;
       conversation.lastResponseAt = meta.lastResponseAt ?? conversation.lastResponseAt;
+      conversation.provider = meta.provider ?? conversation.provider ?? 'claude';
       if (meta.sessionId !== undefined) {
         conversation.sessionId = meta.sessionId;
       }
@@ -461,6 +462,7 @@ export default class ClaudianPlugin extends Plugin {
 
         return {
           id: meta.id,
+          provider: meta.provider ?? 'claude',
           title: meta.title,
           createdAt: meta.createdAt,
           updatedAt: meta.updatedAt,
@@ -1022,6 +1024,7 @@ export default class ClaudianPlugin extends Plugin {
     const conversationId = sessionId ?? this.generateConversationId();
     const conversation: Conversation = {
       id: conversationId,
+      provider: this.getActiveProviderId(),
       title: this.generateDefaultTitle(),
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -1184,6 +1187,7 @@ export default class ClaudianPlugin extends Plugin {
   getConversationList(): ConversationMeta[] {
     return this.conversations.map(c => ({
       id: c.id,
+      provider: c.provider ?? 'claude',
       title: c.title,
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,

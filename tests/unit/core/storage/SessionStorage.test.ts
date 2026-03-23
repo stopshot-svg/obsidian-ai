@@ -55,6 +55,7 @@ describe('SessionStorage', () => {
 
       expect(result).toEqual({
         id: 'conv-123',
+        provider: 'claude',
         title: 'Test Chat',
         createdAt: 1700000000,
         updatedAt: 1700001000,

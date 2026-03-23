@@ -3,6 +3,7 @@
  */
 
 import type { SDKToolUseResult } from './diff';
+import type { ProviderId } from './settings';
 import type { SubagentInfo, SubagentMode, ToolCallInfo } from './tools';
 
 /** Fork origin reference: identifies the source session and resume point. */
@@ -67,6 +68,7 @@ export interface ChatMessage {
 /** Persisted conversation with messages and session state. */
 export interface Conversation {
   id: string;
+  provider?: ProviderId;
   title: string;
   createdAt: number;
   updatedAt: number;
@@ -115,6 +117,7 @@ export interface Conversation {
 /** Lightweight conversation metadata for the history dropdown. */
 export interface ConversationMeta {
   id: string;
+  provider?: ProviderId;
   title: string;
   createdAt: number;
   updatedAt: number;
@@ -135,6 +138,7 @@ export interface ConversationMeta {
  */
 export interface SessionMetadata {
   id: string;
+  provider?: ProviderId;
   title: string;
   titleGenerationStatus?: 'pending' | 'success' | 'failed';
   createdAt: number;

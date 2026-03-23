@@ -30,6 +30,7 @@ export const SESSIONS_PATH = '.claude/sessions';
 interface SessionMetaRecord {
   type: 'meta';
   id: string;
+  provider?: Conversation['provider'];
   title: string;
   createdAt: number;
   updatedAt: number;
@@ -179,6 +180,7 @@ export class SessionStorage {
 
       return {
         id: record.id,
+        provider: record.provider ?? 'claude',
         title: record.title,
         createdAt: record.createdAt,
         updatedAt: record.updatedAt,
@@ -218,6 +220,7 @@ export class SessionStorage {
 
     return {
       id: meta.id,
+      provider: meta.provider ?? 'claude',
       title: meta.title,
       createdAt: meta.createdAt,
       updatedAt: meta.updatedAt,
@@ -237,6 +240,7 @@ export class SessionStorage {
     const meta: SessionMetaRecord = {
       type: 'meta',
       id: conversation.id,
+      provider: conversation.provider,
       title: conversation.title,
       createdAt: conversation.createdAt,
       updatedAt: conversation.updatedAt,
@@ -362,6 +366,7 @@ export class SessionStorage {
       if (!legacyIds.has(meta.id)) {
         metas.push({
           id: meta.id,
+          provider: meta.provider ?? 'claude',
           title: meta.title,
           createdAt: meta.createdAt,
           updatedAt: meta.updatedAt,
@@ -385,6 +390,7 @@ export class SessionStorage {
 
     return {
       id: conversation.id,
+      provider: conversation.provider,
       title: conversation.title,
       titleGenerationStatus: conversation.titleGenerationStatus,
       createdAt: conversation.createdAt,
