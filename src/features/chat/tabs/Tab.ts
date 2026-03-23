@@ -446,6 +446,8 @@ function initializeInputToolbar(tab: TabData, plugin: ClaudianPlugin): void {
   const toolbarComponents = createInputToolbar(inputToolbar, {
     getSettings: () => ({
       model: plugin.settings.model,
+      provider: plugin.getActiveProviderId(),
+      codexModel: plugin.settings.codexModel,
       thinkingBudget: plugin.settings.thinkingBudget,
       effortLevel: plugin.settings.effortLevel,
       permissionMode: plugin.settings.permissionMode,
@@ -453,7 +455,15 @@ function initializeInputToolbar(tab: TabData, plugin: ClaudianPlugin): void {
       enableSonnet1M: plugin.settings.enableSonnet1M,
     }),
     getEnvironmentVariables: () => plugin.getActiveEnvironmentVariables(),
-    onModelChange: async (model: ClaudeModel) => {
+    onModelChange: async (model: string) => {
+      if (plugin.getActiveProviderId() === 'codex') {
+        plugin.settings.codexModel = model === '__codex_default__' ? '' : model;
+        await plugin.saveSettings();
+        tab.ui.modelSelector?.updateDisplay();
+        tab.ui.modelSelector?.renderOptions();
+        return;
+      }
+
       plugin.settings.model = model;
       const isDefaultModel = DEFAULT_CLAUDE_MODELS.find((m) => m.value === model);
       if (isDefaultModel) {

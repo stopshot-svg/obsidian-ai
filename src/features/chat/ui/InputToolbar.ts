@@ -7,6 +7,7 @@ import type {
   ClaudianMcpServer,
   EffortLevel,
   PermissionMode,
+  ProviderId,
   ThinkingBudget,
   UsageInfo
 } from '../../../core/types';
@@ -23,7 +24,9 @@ import { filterValidPaths, findConflictingPath, isDuplicatePath, isValidDirector
 import { expandHomePath, normalizePathForFilesystem } from '../../../utils/path';
 
 export interface ToolbarSettings {
-  model: ClaudeModel;
+  model: string;
+  provider: ProviderId;
+  codexModel: string;
   thinkingBudget: ThinkingBudget;
   effortLevel: EffortLevel;
   permissionMode: PermissionMode;
@@ -32,7 +35,7 @@ export interface ToolbarSettings {
 }
 
 export interface ToolbarCallbacks {
-  onModelChange: (model: ClaudeModel) => Promise<void>;
+  onModelChange: (model: string) => Promise<void>;
   onThinkingBudgetChange: (budget: ThinkingBudget) => Promise<void>;
   onEffortLevelChange: (effort: EffortLevel) => Promise<void>;
   onPermissionModeChange: (mode: PermissionMode) => Promise<void>;
@@ -54,6 +57,18 @@ export class ModelSelector {
   }
 
   private getAvailableModels() {
+    const settings = this.callbacks.getSettings();
+    if (settings.provider === 'codex') {
+      const codexModel = settings.codexModel.trim();
+      return [{
+        value: codexModel || '__codex_default__',
+        label: codexModel || 'Codex default',
+        description: codexModel
+          ? 'Current Codex model from plugin settings.'
+          : 'Uses the Codex CLI default model. Configure a specific model in Settings → Provider.',
+      }];
+    }
+
     const models = [...DEFAULT_CLAUDE_MODELS];
 
     if (this.callbacks.getEnvironmentVariables) {
@@ -65,7 +80,6 @@ export class ModelSelector {
       }
     }
 
-    const settings = this.callbacks.getSettings();
     return filterVisibleModelOptions(models, settings.enableOpus1M, settings.enableSonnet1M);
   }
 
@@ -82,7 +96,10 @@ export class ModelSelector {
 
   updateDisplay() {
     if (!this.buttonEl) return;
-    const currentModel = this.callbacks.getSettings().model;
+    const settings = this.callbacks.getSettings();
+    const currentModel = settings.provider === 'codex'
+      ? (settings.codexModel.trim() || '__codex_default__')
+      : settings.model;
     const models = this.getAvailableModels();
     const modelInfo = models.find(m => m.value === currentModel);
 
@@ -103,7 +120,10 @@ export class ModelSelector {
     if (!this.dropdownEl) return;
     this.dropdownEl.empty();
 
-    const currentModel = this.callbacks.getSettings().model;
+    const settings = this.callbacks.getSettings();
+    const currentModel = settings.provider === 'codex'
+      ? (settings.codexModel.trim() || '__codex_default__')
+      : settings.model;
     const models = this.getAvailableModels();
 
     for (const model of [...models].reverse()) {
