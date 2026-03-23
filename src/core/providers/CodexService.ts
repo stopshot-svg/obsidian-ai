@@ -5,7 +5,7 @@ import * as path from 'path';
 import * as readline from 'readline';
 
 import type ClaudianPlugin from '../../main';
-import { buildCodexExecEnv } from '../../utils/codexEnv';
+import { parseEnvironmentVariables } from '../../utils/env';
 import { getVaultPath } from '../../utils/path';
 import { ClaudianService, type QueryOptions } from '../agent';
 import type { McpServerManager } from '../mcp';
@@ -224,7 +224,13 @@ export class CodexService extends ClaudianService {
   }
 
   private buildExecEnv(): NodeJS.ProcessEnv {
-    return buildCodexExecEnv(this.codexPlugin.getActiveEnvironmentVariables());
+    const env: NodeJS.ProcessEnv = { ...process.env };
+    const customEnv = parseEnvironmentVariables(this.codexPlugin.getActiveEnvironmentVariables());
+    for (const [key, value] of Object.entries(customEnv)) {
+      env[key] = value;
+    }
+    env.GIT_TERMINAL_PROMPT = '0';
+    return env;
   }
 
   private mapApprovalPolicy(): 'never' | 'on-request' {

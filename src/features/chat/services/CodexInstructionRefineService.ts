@@ -4,7 +4,7 @@ import * as readline from 'readline';
 import { buildRefineSystemPrompt } from '../../../core/prompts/instructionRefine';
 import type { InstructionRefineResult } from '../../../core/types';
 import type ClaudianPlugin from '../../../main';
-import { buildCodexExecEnv } from '../../../utils/codexEnv';
+import { parseEnvironmentVariables } from '../../../utils/env';
 import { getVaultPath } from '../../../utils/path';
 import type { InstructionRefineServiceLike, RefineProgressCallback } from './InstructionRefineService';
 
@@ -182,6 +182,12 @@ export class CodexInstructionRefineService implements InstructionRefineServiceLi
   }
 
   private buildExecEnv(): NodeJS.ProcessEnv {
-    return buildCodexExecEnv(this.plugin.getActiveEnvironmentVariables?.() ?? '');
+    const env: NodeJS.ProcessEnv = { ...process.env };
+    const customEnv = parseEnvironmentVariables(this.plugin.getActiveEnvironmentVariables?.() ?? '');
+    for (const [key, value] of Object.entries(customEnv)) {
+      env[key] = value;
+    }
+    env.GIT_TERMINAL_PROMPT = '0';
+    return env;
   }
 }
