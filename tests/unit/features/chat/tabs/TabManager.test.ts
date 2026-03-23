@@ -639,6 +639,7 @@ describe('TabManager - Persistence', () => {
       expect(state.activeTabId).toBeDefined();
       expect(state.openTabs[0]).toHaveProperty('tabId');
       expect(state.openTabs[0]).toHaveProperty('conversationId');
+      expect(state.openTabs[0]).toHaveProperty('provider');
     });
   });
 
@@ -673,6 +674,23 @@ describe('TabManager - Persistence', () => {
       await manager.restoreState(persistedState);
 
       expect(manager.getActiveTabId()).toBe('restored-2');
+    });
+
+    it('should restore provider for tabs without conversation', async () => {
+      mockCreateTab.mockImplementation((opts: any) =>
+        createMockTabData({ id: opts.tabId || 'default-tab' })
+      );
+
+      const persistedState: PersistedTabManagerState = {
+        openTabs: [
+          { tabId: 'restored-1', conversationId: null, provider: 'codex' },
+        ],
+        activeTabId: 'restored-1',
+      };
+
+      await manager.restoreState(persistedState);
+
+      expect(manager.getAllTabs()[0]?.serviceProviderId).toBe('codex');
     });
 
     it('should create default tab if no tabs restored', async () => {

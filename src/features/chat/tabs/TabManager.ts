@@ -498,6 +498,10 @@ export class TabManager implements TabManagerInterface {
       openTabs.push({
         tabId: tab.id,
         conversationId: tab.conversationId,
+        provider: tab.serviceProviderId
+          ?? (tab.conversationId ? this.plugin.getConversationSync(tab.conversationId)?.provider : undefined)
+          ?? this.plugin.settings.provider
+          ?? 'claude',
       });
     }
 
@@ -512,7 +516,10 @@ export class TabManager implements TabManagerInterface {
     // Create tabs from persisted state with error handling
     for (const tabState of state.openTabs) {
       try {
-        await this.createTab(tabState.conversationId, tabState.tabId);
+        const tab = await this.createTab(tabState.conversationId, tabState.tabId);
+        if (tab && !tab.conversationId && tabState.provider) {
+          tab.serviceProviderId = tabState.provider;
+        }
       } catch {
         // Continue restoring other tabs
       }

@@ -216,6 +216,7 @@ export interface TabData {
 export interface PersistedTabState {
   tabId: TabId;
   conversationId: string | null;
+  provider?: ProviderId;
 }
 
 /**
