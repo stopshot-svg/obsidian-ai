@@ -1,8 +1,8 @@
 import type { Component } from 'obsidian';
 import { Notice } from 'obsidian';
 
-import { ClaudianService } from '../../../core/agent';
 import type { McpServerManager } from '../../../core/mcp';
+import { createRuntimeService } from '../../../core/providers';
 import type { ChatMessage, ClaudeModel, Conversation, EffortLevel, PermissionMode, SlashCommand, StreamChunk, ThinkingBudget } from '../../../core/types';
 import { DEFAULT_CLAUDE_MODELS, DEFAULT_EFFORT_LEVEL, DEFAULT_THINKING_BUDGET, getContextWindowSize, isAdaptiveThinkingModel } from '../../../core/types';
 import { t } from '../../../i18n';
@@ -244,12 +244,14 @@ export async function initializeTabService(
     return;
   }
 
-  let service: ClaudianService | null = null;
+  let service = null;
   let unsubscribeReadyState: (() => void) | null = null;
 
   try {
-    // Create per-tab ClaudianService
-    service = new ClaudianService(plugin, mcpManager);
+    const providerId = typeof plugin.getActiveProviderId === 'function'
+      ? plugin.getActiveProviderId()
+      : (plugin.settings.provider ?? 'claude');
+    service = createRuntimeService(plugin, mcpManager, providerId);
     unsubscribeReadyState = service.onReadyStateChange((ready) => {
       tab.ui.modelSelector?.setReady(ready);
     });
