@@ -9,7 +9,7 @@ import { cleanupThinkingBlock } from '../rendering';
 import type { MessageRenderer } from '../rendering/MessageRenderer';
 import { findRewindContext } from '../rewind';
 import type { SubagentManager } from '../services/SubagentManager';
-import type { TitleGenerationService } from '../services/TitleGenerationService';
+import type { TitleGenerationServiceLike } from '../services/TitleGenerationService';
 import type { ChatState } from '../state/ChatState';
 import type { ExternalContextSelector, FileContextManager, ImageContextManager, McpServerSelector, StatusPanel } from '../ui';
 
@@ -34,7 +34,7 @@ export interface ConversationControllerDeps {
   getMcpServerSelector: () => McpServerSelector | null;
   getExternalContextSelector: () => ExternalContextSelector | null;
   clearQueuedMessage: () => void;
-  getTitleGenerationService: () => TitleGenerationService | null;
+  getTitleGenerationService: () => TitleGenerationServiceLike | null;
   getStatusPanel: () => StatusPanel | null;
   getAgentService?: () => ClaudianService | null;
   getRuntimeProviderId?: () => ProviderId | null;

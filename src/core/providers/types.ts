@@ -43,7 +43,7 @@ export const PROVIDER_DESCRIPTORS: Record<ProviderId, ProviderDescriptor> = {
       mcp: false,
       persistentConversation: false,
       slashCommands: false,
-      titleGeneration: false,
+      titleGeneration: true,
     },
   },
 };

@@ -15,7 +15,16 @@ export type TitleGenerationCallback = (
   result: TitleGenerationResult
 ) => Promise<void>;
 
-export class TitleGenerationService {
+export interface TitleGenerationServiceLike {
+  generateTitle(
+    conversationId: string,
+    userMessage: string,
+    callback: TitleGenerationCallback
+  ): Promise<void>;
+  cancel(): void;
+}
+
+export class TitleGenerationService implements TitleGenerationServiceLike {
   private plugin: ClaudianPlugin;
   private activeGenerations: Map<string, AbortController> = new Map();
 

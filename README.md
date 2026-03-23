@@ -115,8 +115,8 @@ Use it like Claude Code—read, write, edit, search files in your vault.
 ### Features
 
 - **Provider selection**: Choose `Claude` or `Codex` in Settings → Provider
-- **Current Codex coverage**: Chat, image attachments, external directories, command execution display, provider-aware session switching
-- **Current Codex gaps**: Inline edit, instruction refinement, AI title generation, MCP integration, and Claude SDK slash commands remain Claude-only for now
+- **Current Codex coverage**: Chat, image attachments, external directories, command execution display, provider-aware session switching, AI title generation
+- **Current Codex gaps**: Inline edit, instruction refinement, MCP integration, and Claude SDK slash commands remain Claude-only for now
 - **Inline Edit**: Select text + hotkey to edit directly in notes with word-level diff preview
 - **Instruction Mode**: Type `#` to add refined instructions to system prompt
 - **Slash Commands**: Type `/` for custom prompt templates or skills

@@ -15,7 +15,8 @@ import type {
 import type { MessageRenderer } from '../rendering';
 import type { InstructionRefineService } from '../services/InstructionRefineService';
 import type { SubagentManager } from '../services/SubagentManager';
-import type { TitleGenerationService } from '../services/TitleGenerationService';
+import type { CodexTitleGenerationService } from '../services/CodexTitleGenerationService';
+import type { TitleGenerationService, TitleGenerationServiceLike } from '../services/TitleGenerationService';
 import type { ChatState } from '../state';
 import type {
   BangBashModeManager,
@@ -118,7 +119,7 @@ export interface TabControllers {
 export interface TabServices {
   subagentManager: SubagentManager;
   instructionRefineService: InstructionRefineService | null;
-  titleGenerationService: TitleGenerationService | null;
+  titleGenerationService: TitleGenerationServiceLike | null;
 }
 
 /**

@@ -22,6 +22,7 @@ import {
 import { cleanupThinkingBlock, MessageRenderer } from '../rendering';
 import { findRewindContext } from '../rewind';
 import { BangBashService } from '../services/BangBashService';
+import { CodexTitleGenerationService } from '../services/CodexTitleGenerationService';
 import { InstructionRefineService } from '../services/InstructionRefineService';
 import { SubagentManager } from '../services/SubagentManager';
 import { TitleGenerationService } from '../services/TitleGenerationService';
@@ -400,7 +401,9 @@ function initializeInstructionAndTodo(tab: TabData, plugin: ClaudianPlugin): voi
     ? new InstructionRefineService(plugin)
     : null;
   tab.services.titleGenerationService = provider.capabilities.titleGeneration
-    ? new TitleGenerationService(plugin)
+    ? (provider.id === 'codex'
+      ? new CodexTitleGenerationService(plugin)
+      : new TitleGenerationService(plugin))
     : null;
   tab.ui.instructionModeManager = new InstructionModeManagerClass(
     dom.inputEl,
