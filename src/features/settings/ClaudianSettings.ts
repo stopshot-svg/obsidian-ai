@@ -170,6 +170,7 @@ export class ClaudianSettingTab extends PluginSettingTab {
       ? {
         claude: 'Claude Code 运行时，功能最完整。',
         codex: 'OpenAI / Codex 运行时，沿用同一套 Obsidian 界面，支持 Ask/Auto 权限与 CLI 管理模型。',
+        gemini: 'Google Gemini CLI 运行时，沿用同一套 Obsidian 界面，支持 Ask/Auto 权限与 Gemini CLI 管理模型。',
       }
       : null;
     providerHint.setText(`${activeProvider.label}: ${providerDescriptions?.[activeProvider.id] ?? activeProvider.description}`);
@@ -184,6 +185,16 @@ export class ClaudianSettingTab extends PluginSettingTab {
         ? '当前 Codex 已支持：聊天、行内编辑、指令优化、外部目录、图片输入、命令/工具流展示、AI 标题生成、Ask/Auto 权限模式，以及由 Codex CLI 管理模型。暂不支持 MCP 与 Claude SDK Slash Commands。'
         : 'Current Codex support: chat, inline edit, instruction mode, external directories, images, command/tool stream, AI title generation, Ask/Auto approvals, and CLI-managed model selection. MCP and Claude SDK slash commands are not wired yet.');
     }
+    if (activeProvider.id === 'gemini') {
+      const geminiSupportHint = containerEl.createDiv({ cls: 'claudian-provider-hint' });
+      geminiSupportHint.style.fontSize = '0.9em';
+      geminiSupportHint.style.color = 'var(--text-warning)';
+      geminiSupportHint.style.marginTop = '-0.2em';
+      geminiSupportHint.style.marginBottom = '0.8em';
+      geminiSupportHint.setText(isZhCN
+        ? '当前 Gemini 已支持：聊天、Ask/Auto 权限模式、CLI 管理模型、会话恢复、外部目录。暂不支持 MCP、行内编辑、指令优化与 Claude SDK Slash Commands。'
+        : 'Current Gemini support: chat, Ask/Auto approvals, CLI-managed model selection, session resume, and external directories. MCP, inline edit, instruction refinement, and Claude SDK slash commands are not wired yet.');
+    }
 
     new Setting(containerEl)
       .setName(isZhCN ? 'Codex 模型' : 'Codex model')
@@ -196,6 +207,21 @@ export class ClaudianSettingTab extends PluginSettingTab {
           .setValue(this.plugin.settings.codexModel || '')
           .onChange(async (value) => {
             this.plugin.settings.codexModel = value.trim();
+            await this.plugin.saveSettings();
+          });
+      });
+
+    new Setting(containerEl)
+      .setName(isZhCN ? 'Gemini 模型' : 'Gemini model')
+      .setDesc(isZhCN
+        ? '可选：为 Gemini 指定模型 ID。留空时由你本地的 Gemini CLI 配置决定模型。'
+        : 'Optional model ID for Gemini. Leave empty to let your local Gemini CLI configuration choose the model.')
+      .addText((text) => {
+        text
+          .setPlaceholder('gemini-2.5-flash')
+          .setValue(this.plugin.settings.geminiModel || '')
+          .onChange(async (value) => {
+            this.plugin.settings.geminiModel = value.trim();
             await this.plugin.saveSettings();
           });
       });
@@ -773,6 +799,29 @@ export class ClaudianSettingTab extends PluginSettingTab {
         this.plugin.settings.codexCliPathsByHost[getHostnameKey()] = trimmed;
         await this.plugin.saveSettings();
         this.plugin.codexCliResolver?.reset();
+      },
+    });
+
+    this.createCliPathSetting(containerEl, {
+      name: isZhCN ? `Gemini CLI 路径（${getHostnameKey()}）` : `Gemini CLI path (${getHostnameKey()})`,
+      description: process.platform === 'win32'
+        ? (isZhCN
+          ? '可选：填写 Gemini CLI 的完整路径。你可以先在 PowerShell 里运行 `Get-Command gemini | Select-Object -ExpandProperty Source`，然后把结果粘贴到这里。留空时会尝试从 PATH 自动发现 `gemini`。'
+          : 'Optional path for the Gemini CLI. In PowerShell, run `Get-Command gemini | Select-Object -ExpandProperty Source` and paste the full result here. Leave empty to auto-detect `gemini` from PATH.')
+        : (isZhCN
+          ? '可选：填写 Gemini CLI 的完整路径。你可以先在终端里运行 `which gemini`，然后把结果粘贴到这里。留空时会尝试从 PATH 自动发现 `gemini`。'
+          : 'Optional path for the Gemini CLI. Run `which gemini` in your terminal and paste the full result here. Leave empty to auto-detect `gemini` from PATH.'),
+      placeholder: process.platform === 'win32'
+        ? 'C:\\Users\\you\\AppData\\Roaming\\npm\\gemini.cmd'
+        : '/usr/local/bin/gemini',
+      currentValue: this.plugin.settings.geminiCliPathsByHost?.[getHostnameKey()] || '',
+      onSave: async (trimmed) => {
+        if (!this.plugin.settings.geminiCliPathsByHost) {
+          this.plugin.settings.geminiCliPathsByHost = {};
+        }
+        this.plugin.settings.geminiCliPathsByHost[getHostnameKey()] = trimmed;
+        await this.plugin.saveSettings();
+        this.plugin.geminiCliResolver?.reset();
       },
     });
   }

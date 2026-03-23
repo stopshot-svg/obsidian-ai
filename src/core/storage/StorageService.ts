@@ -76,6 +76,7 @@ interface LegacySettingsJson {
   blockedCommands?: unknown;
   model?: string;
   codexModel?: string;
+  geminiModel?: string;
   thinkingBudget?: string;
   permissionMode?: string;
   lastNonPlanPermissionMode?: string;
@@ -89,8 +90,10 @@ interface LegacySettingsJson {
   keyboardNavigation?: unknown;
   claudeCliPath?: string;
   codexCliPath?: string;
+  geminiCliPath?: string;
   claudeCliPaths?: unknown;
   codexCliPaths?: unknown;
+  geminiCliPaths?: unknown;
   loadUserClaudeSettings?: boolean;
   enableAutoTitleGeneration?: boolean;
   titleGenerationModel?: string;
@@ -237,6 +240,7 @@ export class StorageService {
       blockedCommands: normalizeBlockedCommands(oldSettings.blockedCommands),
       model: (oldSettings.model as ClaudeModel) ?? DEFAULT_SETTINGS.model,
       codexModel: oldSettings.codexModel ?? DEFAULT_SETTINGS.codexModel,
+      geminiModel: oldSettings.geminiModel ?? DEFAULT_SETTINGS.geminiModel,
       thinkingBudget: (oldSettings.thinkingBudget as StoredClaudianSettings['thinkingBudget']) ?? DEFAULT_SETTINGS.thinkingBudget,
       permissionMode: (oldSettings.permissionMode as StoredClaudianSettings['permissionMode']) ?? DEFAULT_SETTINGS.permissionMode,
       excludedTags: oldSettings.excludedTags ?? DEFAULT_SETTINGS.excludedTags,
@@ -251,6 +255,8 @@ export class StorageService {
       claudeCliPathsByHost: DEFAULT_SETTINGS.claudeCliPathsByHost,  // Migration to hostname-based handled in main.ts
       codexCliPath: oldSettings.codexCliPath ?? DEFAULT_SETTINGS.codexCliPath,
       codexCliPathsByHost: DEFAULT_SETTINGS.codexCliPathsByHost,
+      geminiCliPath: oldSettings.geminiCliPath ?? DEFAULT_SETTINGS.geminiCliPath,
+      geminiCliPathsByHost: DEFAULT_SETTINGS.geminiCliPathsByHost,
       loadUserClaudeSettings: oldSettings.loadUserClaudeSettings ?? DEFAULT_SETTINGS.loadUserClaudeSettings,
       enableAutoTitleGeneration: oldSettings.enableAutoTitleGeneration ?? DEFAULT_SETTINGS.enableAutoTitleGeneration,
       titleGenerationModel: oldSettings.titleGenerationModel ?? DEFAULT_SETTINGS.titleGenerationModel,
