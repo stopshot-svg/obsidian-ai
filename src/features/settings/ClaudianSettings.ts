@@ -735,7 +735,9 @@ export class ClaudianSettingTab extends PluginSettingTab {
 
     this.createCliPathSetting(containerEl, {
       name: `Codex CLI path (${getHostnameKey()})`,
-      description: 'Optional path for the Codex CLI. Leave empty to auto-detect `codex` from PATH.',
+      description: process.platform === 'win32'
+        ? 'Optional path for the Codex CLI. In PowerShell, run `Get-Command codex | Select-Object -ExpandProperty Source` and paste the full result here. Leave empty to auto-detect `codex` from PATH.'
+        : 'Optional path for the Codex CLI. Run `which codex` in your terminal and paste the full result here. Leave empty to auto-detect `codex` from PATH.',
       placeholder: process.platform === 'win32'
         ? 'C:\\Users\\you\\AppData\\Local\\Programs\\codex\\codex.exe'
         : '/usr/local/bin/codex',
