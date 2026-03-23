@@ -42,6 +42,7 @@ export class FileContextManager {
 
   // MCP server support
   private onMcpMentionChange: ((servers: Set<string>) => void) | null = null;
+  private mcpMentionsEnabled = true;
 
   constructor(
     app: App,
@@ -325,7 +326,11 @@ export class FileContextManager {
   // ========================================
 
   setMcpManager(manager: McpServerManager | null): void {
-    this.mentionDropdown.setMcpManager(manager);
+    this.mentionDropdown.setMcpManager(this.mcpMentionsEnabled ? manager : null);
+  }
+
+  setMcpMentionsEnabled(enabled: boolean): void {
+    this.mcpMentionsEnabled = enabled;
   }
 
   setAgentService(agentManager: AgentManager | null): void {

@@ -462,6 +462,13 @@ export function refreshTabProviderBindings(tab: TabData, plugin: ClaudianPlugin)
     provider.capabilities.mcp ? plugin.mcpManager : null
   );
   if (
+    tab.ui.fileContextManager &&
+    'setMcpMentionsEnabled' in tab.ui.fileContextManager &&
+    typeof tab.ui.fileContextManager.setMcpMentionsEnabled === 'function'
+  ) {
+    tab.ui.fileContextManager.setMcpMentionsEnabled(provider.capabilities.mcp);
+  }
+  if (
     !provider.capabilities.mcp &&
     tab.ui.mcpServerSelector &&
     'clearEnabled' in tab.ui.mcpServerSelector &&
