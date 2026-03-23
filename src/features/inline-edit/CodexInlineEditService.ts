@@ -2,8 +2,8 @@ import { type ChildProcessWithoutNullStreams,spawn } from 'child_process';
 import * as readline from 'readline';
 
 import type ClaudianPlugin from '../../main';
+import { buildCodexExecEnv } from '../../utils/codexEnv';
 import { appendContextFiles } from '../../utils/context';
-import { parseEnvironmentVariables } from '../../utils/env';
 import { getVaultPath } from '../../utils/path';
 import {
   buildInlineEditPrompt,
@@ -160,12 +160,6 @@ export class CodexInlineEditService {
   }
 
   private buildExecEnv(): NodeJS.ProcessEnv {
-    const env: NodeJS.ProcessEnv = { ...process.env };
-    const customEnv = parseEnvironmentVariables(this.plugin.getActiveEnvironmentVariables?.() ?? '');
-    for (const [key, value] of Object.entries(customEnv)) {
-      env[key] = value;
-    }
-    env.GIT_TERMINAL_PROMPT = '0';
-    return env;
+    return buildCodexExecEnv(this.plugin.getActiveEnvironmentVariables?.() ?? '');
   }
 }

@@ -2,7 +2,7 @@ import { type ChildProcessWithoutNullStreams,spawn } from 'child_process';
 import * as readline from 'readline';
 
 import type ClaudianPlugin from '../../../main';
-import { parseEnvironmentVariables } from '../../../utils/env';
+import { buildCodexExecEnv } from '../../../utils/codexEnv';
 import { getVaultPath } from '../../../utils/path';
 import type { TitleGenerationCallback } from './TitleGenerationService';
 
@@ -168,12 +168,6 @@ export class CodexTitleGenerationService {
   }
 
   private buildExecEnv(): NodeJS.ProcessEnv {
-    const env: NodeJS.ProcessEnv = { ...process.env };
-    const customEnv = parseEnvironmentVariables(this.plugin.getActiveEnvironmentVariables?.() ?? '');
-    for (const [key, value] of Object.entries(customEnv)) {
-      env[key] = value;
-    }
-    env.GIT_TERMINAL_PROMPT = '0';
-    return env;
+    return buildCodexExecEnv(this.plugin.getActiveEnvironmentVariables?.() ?? '');
   }
 }
