@@ -214,8 +214,8 @@ export class ClaudianSettingTab extends PluginSettingTab {
       geminiSupportHint.style.marginTop = '-0.2em';
       geminiSupportHint.style.marginBottom = '0.8em';
       geminiSupportHint.setText(isZhCN
-        ? '当前 Gemini 已支持：聊天、Ask/Auto 权限模式、CLI 管理模型、会话恢复、外部目录。暂不支持 MCP、行内编辑、指令优化与 Claude SDK Slash Commands。'
-        : 'Current Gemini support: chat, Ask/Auto approvals, CLI-managed model selection, session resume, and external directories. MCP, inline edit, instruction refinement, and Claude SDK slash commands are not wired yet.');
+        ? '当前 Gemini 已支持：聊天、Ask/Auto 权限模式、CLI 管理模型、会话恢复、外部目录。插件当前不会自动启用 Gemini CLI 的 sandbox（避免普通机器缺少 Docker / Podman 时直接报错）。暂不支持 MCP、行内编辑、指令优化与 Claude SDK Slash Commands。'
+        : 'Current Gemini support: chat, Ask/Auto approvals, CLI-managed model selection, session resume, and external directories. The plugin currently does not auto-enable Gemini CLI sandboxing, which avoids hard failures on machines without Docker or Podman. MCP, inline edit, instruction refinement, and Claude SDK slash commands are not wired yet.');
     }
 
     new Setting(containerEl)

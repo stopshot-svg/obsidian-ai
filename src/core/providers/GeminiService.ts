@@ -17,6 +17,11 @@ type GeminiStreamEvent =
   | { type: 'result'; status?: 'success' | 'error'; error?: { message?: string } }
   | { type: 'error'; message?: string; severity?: string };
 
+function stripAnsi(text: string): string {
+  const ansiPattern = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, 'g');
+  return text.replace(ansiPattern, '');
+}
+
 export class GeminiService extends ClaudianService {
   private readonly geminiPlugin: ClaudianPlugin;
   private runningProcess: ChildProcessWithoutNullStreams | null = null;
@@ -86,10 +91,6 @@ export class GeminiService extends ClaudianService {
         break;
     }
 
-    if (!this.geminiPlugin.settings.allowExternalAccess) {
-      commandArgs.push('--sandbox');
-    }
-
     const spawnSpec = createGeminiSpawnSpec(resolvedGeminiPath, commandArgs, {
       cwd: vaultPath,
       env: this.buildExecEnv(),
@@ -134,7 +135,7 @@ export class GeminiService extends ClaudianService {
 
       const { code, signal } = await exitPromise;
       if (code !== 0 || signal) {
-        const stderr = Buffer.concat(stderrChunks).toString('utf8').trim();
+        const stderr = stripAnsi(Buffer.concat(stderrChunks).toString('utf8')).trim();
         yield {
           type: 'error',
           content: stderr || `Gemini CLI failed with ${signal ? `signal ${signal}` : `code ${code ?? 1}`}`,
