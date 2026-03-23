@@ -684,7 +684,12 @@ export default class ClaudianPlugin extends Plugin {
   }
 
   getEffectiveProviderId(): ProviderId {
-    const activeConversationId = this.getView()?.getActiveTab()?.conversationId ?? null;
+    const activeTab = this.getView()?.getActiveTab() ?? null;
+    if (activeTab?.serviceProviderId) {
+      return activeTab.serviceProviderId;
+    }
+
+    const activeConversationId = activeTab?.conversationId ?? null;
     if (activeConversationId) {
       const conversationProvider = this.getConversationSync(activeConversationId)?.provider;
       if (conversationProvider) {

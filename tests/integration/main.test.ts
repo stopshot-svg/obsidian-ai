@@ -432,6 +432,33 @@ describe('ClaudianPlugin', () => {
       expect(conv.title.length).toBeGreaterThan(0);
     });
 
+    it('uses current conversation provider as effective provider', async () => {
+      await plugin.onload();
+
+      const codexConv = await plugin.createConversation(undefined, 'codex');
+      jest.spyOn(plugin, 'getView').mockReturnValue({
+        getActiveTab: () => ({
+          conversationId: codexConv.id,
+          serviceProviderId: null,
+        }),
+      } as any);
+
+      expect(plugin.getEffectiveProviderId()).toBe('codex');
+    });
+
+    it('uses active tab runtime provider before conversation lookup', async () => {
+      await plugin.onload();
+
+      jest.spyOn(plugin, 'getView').mockReturnValue({
+        getActiveTab: () => ({
+          conversationId: null,
+          serviceProviderId: 'codex',
+        }),
+      } as any);
+
+      expect(plugin.getEffectiveProviderId()).toBe('codex');
+    });
+
     // Note: Session management is now per-tab via TabManager
   });
 
