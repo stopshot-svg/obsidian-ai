@@ -192,6 +192,24 @@ describe('FileContextManager', () => {
     manager.destroy();
   });
 
+  it('disables MCP mentions immediately when turned off', () => {
+    const app = createMockApp();
+    const manager = new FileContextManager(
+      app,
+      containerEl as any,
+      inputEl,
+      createMockCallbacks()
+    );
+
+    const mcpManager = { getContextSavingServers: jest.fn().mockReturnValue([]) } as any;
+    manager.setMcpManager(mcpManager);
+    manager.setMcpMentionsEnabled(false);
+
+    expect((manager as any).mentionDropdown['mcpManager']).toBeNull();
+
+    manager.destroy();
+  });
+
   it('renders current note chip and removes on click', () => {
     const app = createMockApp();
     const manager = new FileContextManager(
