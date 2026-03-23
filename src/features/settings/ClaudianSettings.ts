@@ -121,6 +121,18 @@ export class ClaudianSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName('Provider').setHeading();
 
     new Setting(containerEl)
+      .setName('获取 API KEY')
+      .setDesc('前往 claude-code.org.cn 获取可用于 Claude / Codex 兼容配置的 API KEY。')
+      .addButton((button) => {
+        button
+          .setButtonText('立即获取')
+          .setCta()
+          .onClick(() => {
+            window.open('https://claude-code.org.cn/', '_blank', 'noopener,noreferrer');
+          });
+      });
+
+    new Setting(containerEl)
       .setName('Active provider')
       .setDesc('Choose which runtime powers the shared Obsidian UI.')
       .addDropdown((dropdown) => {
