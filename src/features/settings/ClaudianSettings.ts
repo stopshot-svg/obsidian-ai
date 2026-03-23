@@ -117,6 +117,33 @@ export class ClaudianSettingTab extends PluginSettingTab {
           });
       });
 
+    new Setting(containerEl).setName('Provider').setHeading();
+
+    new Setting(containerEl)
+      .setName('Active provider')
+      .setDesc('Choose which runtime powers the shared Obsidian UI.')
+      .addDropdown((dropdown) => {
+        for (const provider of this.plugin.providerManager.listProviders()) {
+          const suffix = provider.status === 'experimental' ? ' (Experimental)' : '';
+          dropdown.addOption(provider.id, `${provider.label}${suffix}`);
+        }
+        dropdown
+          .setValue(this.plugin.settings.provider)
+          .onChange(async (value) => {
+            this.plugin.settings.provider = value as typeof this.plugin.settings.provider;
+            await this.plugin.saveSettings();
+            this.display();
+          });
+      });
+
+    const activeProvider = this.plugin.providerManager.getActiveDescriptor(this.plugin.settings);
+    const providerHint = containerEl.createDiv({ cls: 'claudian-provider-hint' });
+    providerHint.style.fontSize = '0.9em';
+    providerHint.style.color = 'var(--text-muted)';
+    providerHint.style.marginTop = '-0.4em';
+    providerHint.style.marginBottom = '0.8em';
+    providerHint.setText(`${activeProvider.label}: ${activeProvider.description}`);
+
     new Setting(containerEl).setName(t('settings.customization')).setHeading();
 
     new Setting(containerEl)
@@ -646,16 +673,60 @@ export class ClaudianSettingTab extends PluginSettingTab {
       updateMaxTabsWarning(this.plugin.settings.maxTabs ?? 3);
     });
 
-    const hostnameKey = getHostnameKey();
+    this.renderCliPathSettings(containerEl);
+  }
 
-    const platformDesc = process.platform === 'win32'
-      ? t('settings.cliPath.descWindows')
-      : t('settings.cliPath.descUnix');
-    const cliPathDescription = `${t('settings.cliPath.desc')} ${platformDesc}`;
+  private renderCliPathSettings(containerEl: HTMLElement): void {
+    new Setting(containerEl).setName('Runtime').setHeading();
+    this.createCliPathSetting(containerEl, {
+      name: t('settings.cliPath.name'),
+      description: `${t('settings.cliPath.desc')} ${process.platform === 'win32' ? t('settings.cliPath.descWindows') : t('settings.cliPath.descUnix')}`,
+      placeholder: process.platform === 'win32'
+        ? 'D:\\nodejs\\node_global\\node_modules\\@anthropic-ai\\claude-code\\cli.js'
+        : '/usr/local/lib/node_modules/@anthropic-ai/claude-code/cli.js',
+      currentValue: this.plugin.settings.claudeCliPathsByHost?.[getHostnameKey()] || '',
+      onSave: async (trimmed) => {
+        if (!this.plugin.settings.claudeCliPathsByHost) {
+          this.plugin.settings.claudeCliPathsByHost = {};
+        }
+        this.plugin.settings.claudeCliPathsByHost[getHostnameKey()] = trimmed;
+        await this.plugin.saveSettings();
+        this.plugin.cliResolver?.reset();
+        await this.cleanupAllTabs();
+      },
+    });
 
+    this.createCliPathSetting(containerEl, {
+      name: `Codex CLI path (${getHostnameKey()})`,
+      description: 'Optional path for the Codex CLI. Leave empty to auto-detect `codex` from PATH.',
+      placeholder: process.platform === 'win32'
+        ? 'C:\\Users\\you\\AppData\\Local\\Programs\\codex\\codex.exe'
+        : '/usr/local/bin/codex',
+      currentValue: this.plugin.settings.codexCliPathsByHost?.[getHostnameKey()] || '',
+      onSave: async (trimmed) => {
+        if (!this.plugin.settings.codexCliPathsByHost) {
+          this.plugin.settings.codexCliPathsByHost = {};
+        }
+        this.plugin.settings.codexCliPathsByHost[getHostnameKey()] = trimmed;
+        await this.plugin.saveSettings();
+        this.plugin.codexCliResolver?.reset();
+      },
+    });
+  }
+
+  private createCliPathSetting(
+    containerEl: HTMLElement,
+    options: {
+      name: string;
+      description: string;
+      placeholder: string;
+      currentValue: string;
+      onSave: (trimmed: string) => Promise<void>;
+    }
+  ): void {
     const cliPathSetting = new Setting(containerEl)
-      .setName(`${t('settings.cliPath.name')} (${hostnameKey})`)
-      .setDesc(cliPathDescription);
+      .setName(options.name)
+      .setDesc(options.description);
 
     const validationEl = containerEl.createDiv({ cls: 'claudian-cli-path-validation' });
     validationEl.style.color = 'var(--text-error)';
@@ -664,34 +735,12 @@ export class ClaudianSettingTab extends PluginSettingTab {
     validationEl.style.marginBottom = '0.5em';
     validationEl.style.display = 'none';
 
-    const validatePath = (value: string): string | null => {
-      const trimmed = value.trim();
-      if (!trimmed) return null; // Empty is valid (auto-detect)
-
-      const expandedPath = expandHomePath(trimmed);
-
-      if (!fs.existsSync(expandedPath)) {
-        return t('settings.cliPath.validation.notExist');
-      }
-      const stat = fs.statSync(expandedPath);
-      if (!stat.isFile()) {
-        return t('settings.cliPath.validation.isDirectory');
-      }
-      return null;
-    };
-
     cliPathSetting.addText((text) => {
-      const placeholder = process.platform === 'win32'
-        ? 'D:\\nodejs\\node_global\\node_modules\\@anthropic-ai\\claude-code\\cli.js'
-        : '/usr/local/lib/node_modules/@anthropic-ai/claude-code/cli.js';
-
-      const currentValue = this.plugin.settings.claudeCliPathsByHost?.[hostnameKey] || '';
-
       text
-        .setPlaceholder(placeholder)
-        .setValue(currentValue)
+        .setPlaceholder(options.placeholder)
+        .setValue(options.currentValue)
         .onChange(async (value) => {
-          const error = validatePath(value);
+          const error = this.validateCliPath(value);
           if (error) {
             validationEl.setText(error);
             validationEl.style.display = 'block';
@@ -701,28 +750,43 @@ export class ClaudianSettingTab extends PluginSettingTab {
             text.inputEl.style.borderColor = '';
           }
 
-          const trimmed = value.trim();
-          if (!this.plugin.settings.claudeCliPathsByHost) {
-            this.plugin.settings.claudeCliPathsByHost = {};
-          }
-          this.plugin.settings.claudeCliPathsByHost[hostnameKey] = trimmed;
-          await this.plugin.saveSettings();
-          this.plugin.cliResolver?.reset();
-          const view = this.plugin.getView();
-          await view?.getTabManager()?.broadcastToAllTabs(
-            (service) => Promise.resolve(service.cleanup())
-          );
+          await options.onSave(value.trim());
         });
+
       text.inputEl.addClass('claudian-settings-cli-path-input');
       text.inputEl.style.width = '100%';
 
-      const initialError = validatePath(currentValue);
+      const initialError = this.validateCliPath(options.currentValue);
       if (initialError) {
         validationEl.setText(initialError);
         validationEl.style.display = 'block';
         text.inputEl.style.borderColor = 'var(--text-error)';
       }
     });
+  }
+
+  private validateCliPath(value: string): string | null {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+
+    const expandedPath = expandHomePath(trimmed);
+    if (!fs.existsSync(expandedPath)) {
+      return t('settings.cliPath.validation.notExist');
+    }
+
+    const stat = fs.statSync(expandedPath);
+    if (!stat.isFile()) {
+      return t('settings.cliPath.validation.isDirectory');
+    }
+
+    return null;
+  }
+
+  private async cleanupAllTabs(): Promise<void> {
+    const view = this.plugin.getView();
+    await view?.getTabManager()?.broadcastToAllTabs(
+      (service) => Promise.resolve(service.cleanup())
+    );
   }
 
   private renderContextLimitsSection(): void {
