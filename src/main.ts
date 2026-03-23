@@ -197,25 +197,37 @@ export default class ClaudianPlugin extends Plugin {
   private conversations: Conversation[] = [];
   private runtimeEnvironmentVariables = '';
 
+  private reportStartupIssue(message: string, error: unknown): void {
+    console.error(`[Obsidian AI] ${message}`, error);
+    new Notice(message);
+  }
+
+  private async loadSettingsSafely(): Promise<void> {
+    try {
+      await this.loadSettings();
+    } catch (error) {
+      if (!this.storage) {
+        this.storage = new StorageService(this);
+      }
+      this.settings = {
+        ...DEFAULT_SETTINGS,
+        slashCommands: [],
+      };
+      this.conversations = [];
+      setLocale(this.settings.locale);
+      this.reportStartupIssue(
+        'Obsidian AI loaded with default settings because existing local data could not be read.',
+        error
+      );
+    }
+  }
+
   async onload() {
-    await this.loadSettings();
+    await this.loadSettingsSafely();
 
     this.cliResolver = new ClaudeCliResolver();
     this.codexCliResolver = new CodexCliResolver();
     this.providerManager = new ProviderManager();
-
-    // Initialize MCP manager (shared for agent + UI)
-    this.mcpManager = new McpServerManager(this.storage.mcp);
-    await this.mcpManager.loadServers();
-
-    // Initialize plugin manager (reads from installed_plugins.json + settings.json)
-    const vaultPath = (this.app.vault.adapter as any).basePath;
-    this.pluginManager = new PluginManager(vaultPath, this.storage.ccSettings);
-    await this.pluginManager.loadPlugins();
-
-    // Initialize agent manager (loads plugin agents from plugin install paths)
-    this.agentManager = new AgentManager(vaultPath, this.pluginManager);
-    await this.agentManager.loadAgents();
 
     this.registerView(
       VIEW_TYPE_CLAUDIAN,
@@ -233,6 +245,33 @@ export default class ClaudianPlugin extends Plugin {
         this.activateView();
       },
     });
+
+    this.addSettingTab(new ClaudianSettingTab(this.app, this));
+
+    // Initialize MCP manager (shared for agent + UI)
+    this.mcpManager = new McpServerManager(this.storage.mcp);
+    try {
+      await this.mcpManager.loadServers();
+    } catch (error) {
+      this.reportStartupIssue('Failed to load MCP settings. Obsidian AI will start without MCP servers.', error);
+    }
+
+    // Initialize plugin manager (reads from installed_plugins.json + settings.json)
+    const vaultPath = (this.app.vault.adapter as any).basePath;
+    this.pluginManager = new PluginManager(vaultPath, this.storage.ccSettings);
+    try {
+      await this.pluginManager.loadPlugins();
+    } catch (error) {
+      this.reportStartupIssue('Failed to load installed Claude plugins. Obsidian AI will continue without them.', error);
+    }
+
+    // Initialize agent manager (loads plugin agents from plugin install paths)
+    this.agentManager = new AgentManager(vaultPath, this.pluginManager);
+    try {
+      await this.agentManager.loadAgents();
+    } catch (error) {
+      this.reportStartupIssue('Failed to load agents. Obsidian AI will continue with built-in defaults only.', error);
+    }
 
     this.addCommand({
       id: 'inline-edit',
@@ -342,8 +381,6 @@ export default class ClaudianPlugin extends Plugin {
         return true;
       },
     });
-
-    this.addSettingTab(new ClaudianSettingTab(this.app, this));
   }
 
   async onunload() {

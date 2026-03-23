@@ -1,5 +1,6 @@
 import * as os from 'os';
 
+import { StorageService } from '@/core/storage';
 import { TOOL_SUBAGENT } from '@/core/tools';
 import { DEFAULT_SETTINGS, VIEW_TYPE_CLAUDIAN } from '@/core/types';
 import * as sdkSession from '@/utils/sdkSession';
@@ -14,10 +15,12 @@ describe('ClaudianPlugin', () => {
   let plugin: ClaudianPlugin;
   let mockApp: any;
   let mockManifest: any;
+  let consoleErrorSpy: jest.SpyInstance;
 
   beforeEach(() => {
     // Reset mocks
     jest.clearAllMocks();
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
     mockApp = {
       vault: {
@@ -54,6 +57,10 @@ describe('ClaudianPlugin', () => {
     // Create plugin instance with mocked app
     plugin = new ClaudianPlugin(mockApp, mockManifest);
     (plugin.loadData as jest.Mock).mockResolvedValue({});
+  });
+
+  afterEach(() => {
+    consoleErrorSpy.mockRestore();
   });
 
   describe('onload', () => {
@@ -94,6 +101,20 @@ describe('ClaudianPlugin', () => {
         name: 'Open chat view',
         callback: expect.any(Function),
       });
+    });
+
+    it('should still load and register settings when stored data is unreadable', async () => {
+      jest.spyOn(StorageService.prototype, 'initialize').mockRejectedValueOnce(new Error('corrupt settings'));
+
+      await expect(plugin.onload()).resolves.toBeUndefined();
+
+      expect(plugin.settings).toBeDefined();
+      expect(plugin.settings.enableBlocklist).toBe(DEFAULT_SETTINGS.enableBlocklist);
+      expect((plugin.registerView as jest.Mock)).toHaveBeenCalledWith(
+        VIEW_TYPE_CLAUDIAN,
+        expect.any(Function)
+      );
+      expect((plugin.addSettingTab as jest.Mock)).toHaveBeenCalled();
     });
 
     it('should migrate legacy cli path to hostname-based paths and clear old field', async () => {
