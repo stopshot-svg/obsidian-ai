@@ -22,6 +22,7 @@ import { buildExternalContextDisplayEntries } from '../../../utils/externalConte
 import { externalContextScanner } from '../../../utils/externalContextScanner';
 import { escapeHtml, normalizeInsertionText } from '../../../utils/inlineEdit';
 import { getVaultPath, normalizePathForVault as normalizePathForVaultUtil } from '../../../utils/path';
+import { CodexInlineEditService } from '../CodexInlineEditService';
 import { type InlineEditMode, InlineEditService } from '../InlineEditService';
 
 export type InlineEditContext =
@@ -264,7 +265,7 @@ class InlineEditController {
   private startLine: number = 0; // 1-indexed
   private mode: InlineEditMode;
   private cursorContext: CursorContext | null = null;
-  private inlineEditService: InlineEditService;
+  private inlineEditService: InlineEditService | CodexInlineEditService;
   private escHandler: ((e: KeyboardEvent) => void) | null = null;
   private selectionListener: ((e: Event) => void) | null = null;
   private isConversing = false;
@@ -282,7 +283,10 @@ class InlineEditController {
     private getExternalContexts: () => string[],
     private resolve: (result: { decision: InlineEditDecision; editedText?: string }) => void
   ) {
-    this.inlineEditService = new InlineEditService(plugin);
+    const providerId = plugin.getEffectiveProviderId?.() ?? plugin.getActiveProviderId?.() ?? plugin.settings.provider ?? 'claude';
+    this.inlineEditService = providerId === 'codex'
+      ? new CodexInlineEditService(plugin)
+      : new InlineEditService(plugin);
     this.mentionDataProvider = new VaultMentionDataProvider(this.app, {
       onFileLoadError: () => {
         new Notice('Failed to load vault files. Vault @-mentions may be unavailable.');
