@@ -425,8 +425,8 @@ export class StreamController {
     if (!state.currentTextEl) {
       state.currentTextEl = state.currentContentEl.createDiv({ cls: 'claudian-text-block' });
       const provider = state.messages[state.messages.length - 1]?.provider;
-      if (provider === 'codex') {
-        state.currentTextEl.setAttribute('data-provider', 'codex');
+      if (provider === 'codex' || provider === 'gemini') {
+        state.currentTextEl.setAttribute('data-provider', provider);
         state.currentTextEl.setAttribute('data-stage', 'streaming');
       }
       state.currentTextContent = '';
@@ -443,8 +443,8 @@ export class StreamController {
       msg.contentBlocks.push({ type: 'text', content: state.currentTextContent });
       // Copy button added here (not during streaming) to match history-loaded messages
       if (state.currentTextEl) {
-        if (msg.provider === 'codex') {
-          state.currentTextEl.setAttribute('data-provider', 'codex');
+        if (msg.provider === 'codex' || msg.provider === 'gemini') {
+          state.currentTextEl.setAttribute('data-provider', msg.provider);
           state.currentTextEl.setAttribute('data-stage', 'final');
         }
         renderer.addTextCopyButton(state.currentTextEl, state.currentTextContent);
