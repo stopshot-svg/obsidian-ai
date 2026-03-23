@@ -449,12 +449,21 @@ function initializeInstructionAndTodo(tab: TabData, plugin: ClaudianPlugin): voi
  */
 function initializeInputToolbar(tab: TabData, plugin: ClaudianPlugin): void {
   const { dom } = tab;
+  const resolveTabProviderId = () => {
+    if (tab.serviceProviderId) {
+      return tab.serviceProviderId;
+    }
+    if (tab.conversationId) {
+      return plugin.getConversationSync(tab.conversationId)?.provider ?? plugin.getActiveProviderId();
+    }
+    return plugin.getActiveProviderId();
+  };
 
   const inputToolbar = dom.inputWrapper.createDiv({ cls: 'claudian-input-toolbar' });
   const toolbarComponents = createInputToolbar(inputToolbar, {
     getSettings: () => ({
       model: plugin.settings.model,
-      provider: plugin.getActiveProviderId(),
+      provider: resolveTabProviderId(),
       codexModel: plugin.settings.codexModel,
       thinkingBudget: plugin.settings.thinkingBudget,
       effortLevel: plugin.settings.effortLevel,
@@ -464,7 +473,7 @@ function initializeInputToolbar(tab: TabData, plugin: ClaudianPlugin): void {
     }),
     getEnvironmentVariables: () => plugin.getActiveEnvironmentVariables(),
     onModelChange: async (model: string) => {
-      if (plugin.getActiveProviderId() === 'codex') {
+      if (resolveTabProviderId() === 'codex') {
         plugin.settings.codexModel = model === '__codex_default__' ? '' : model;
         await plugin.saveSettings();
         tab.ui.modelSelector?.updateDisplay();
