@@ -625,6 +625,12 @@ export class ConversationController {
       const content = item.createDiv({ cls: 'claudian-history-item-content' });
       const titleEl = content.createDiv({ cls: 'claudian-history-item-title', text: conv.title });
       titleEl.setAttribute('title', conv.title);
+      const providerLabel = (conv.provider ?? 'claude') === 'codex' ? 'Codex' : 'Claude';
+      const providerEl = content.createDiv({
+        cls: 'claudian-history-item-provider',
+        text: providerLabel,
+      });
+      providerEl.setAttribute('aria-label', `Provider: ${providerLabel}`);
       content.createDiv({
         cls: 'claudian-history-item-date',
         text: isCurrent ? 'Current session' : this.formatDate(conv.lastResponseAt ?? conv.createdAt),

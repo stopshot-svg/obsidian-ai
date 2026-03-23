@@ -716,6 +716,23 @@ describe('ConversationController', () => {
 
         expect(container.children.length).toBe(2); // header + list
       });
+
+      it('should render provider labels for history items', () => {
+        const container = createMockEl();
+        const onSelectConversation = jest.fn();
+
+        (deps.plugin.getConversationList as jest.Mock).mockReturnValue([
+          { id: 'conv-1', title: 'Claude Chat', provider: 'claude', createdAt: 1000, lastResponseAt: 1000 },
+          { id: 'conv-2', title: 'Codex Chat', provider: 'codex', createdAt: 2000, lastResponseAt: 2000 },
+        ]);
+
+        controller.renderHistoryDropdown(container, { onSelectConversation });
+
+        const labels = container.querySelectorAll('.claudian-history-item-provider');
+        const texts = labels.map((el: any) => el.textContent);
+        expect(texts).toContain('Claude');
+        expect(texts).toContain('Codex');
+      });
     });
   });
 
