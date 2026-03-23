@@ -4,6 +4,7 @@ import * as readline from 'readline';
 import { buildRefineSystemPrompt } from '../../../core/prompts/instructionRefine';
 import type { InstructionRefineResult } from '../../../core/types';
 import type ClaudianPlugin from '../../../main';
+import { createCodexSpawnSpec } from '../../../utils/codexProcess';
 import { parseEnvironmentVariables } from '../../../utils/env';
 import { getVaultPath } from '../../../utils/path';
 import type { InstructionRefineServiceLike, RefineProgressCallback } from './InstructionRefineService';
@@ -96,11 +97,12 @@ export class CodexInstructionRefineService implements InstructionRefineServiceLi
     }
 
     const fullPrompt = `${buildRefineSystemPrompt(this.existingInstructions)}\n\n${prompt}`;
-    const child = spawn(resolvedCodexPath, commandArgs, {
+    const spawnSpec = createCodexSpawnSpec(resolvedCodexPath, commandArgs, {
       cwd: vaultPath,
       env: this.buildExecEnv(),
       stdio: 'pipe',
     });
+    const child = spawn(spawnSpec.command, spawnSpec.args, spawnSpec.options);
     this.runningProcess = child;
 
     const exitPromise = new Promise<number | null>((resolve) => {

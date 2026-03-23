@@ -2,6 +2,7 @@ import { type ChildProcessWithoutNullStreams,spawn } from 'child_process';
 import * as readline from 'readline';
 
 import type ClaudianPlugin from '../../main';
+import { createCodexSpawnSpec } from '../../utils/codexProcess';
 import { appendContextFiles } from '../../utils/context';
 import { parseEnvironmentVariables } from '../../utils/env';
 import { getVaultPath } from '../../utils/path';
@@ -91,11 +92,12 @@ export class CodexInlineEditService {
       commandArgs.push('resume', this.threadId);
     }
 
-    const child = spawn(resolvedCodexPath, commandArgs, {
+    const spawnSpec = createCodexSpawnSpec(resolvedCodexPath, commandArgs, {
       cwd: vaultPath,
       env: this.buildExecEnv(),
       stdio: 'pipe',
     });
+    const child = spawn(spawnSpec.command, spawnSpec.args, spawnSpec.options);
     this.runningProcess = child;
 
     const exitPromise = new Promise<number | null>((resolve) => {

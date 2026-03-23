@@ -5,6 +5,7 @@ import * as path from 'path';
 import * as readline from 'readline';
 
 import type ClaudianPlugin from '../../main';
+import { createCodexSpawnSpec } from '../../utils/codexProcess';
 import { parseEnvironmentVariables } from '../../utils/env';
 import { getVaultPath } from '../../utils/path';
 import { ClaudianService, type QueryOptions } from '../agent';
@@ -131,11 +132,12 @@ export class CodexService extends ClaudianService {
     }
 
     const env = this.buildExecEnv();
-    const child = spawn(resolvedCodexPath, commandArgs, {
+    const spawnSpec = createCodexSpawnSpec(resolvedCodexPath, commandArgs, {
       cwd: vaultPath,
       env,
       stdio: 'pipe',
     });
+    const child = spawn(spawnSpec.command, spawnSpec.args, spawnSpec.options);
 
     this.runningProcess = child;
 
