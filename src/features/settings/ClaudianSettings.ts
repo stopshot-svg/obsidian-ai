@@ -153,7 +153,7 @@ export class ClaudianSettingTab extends PluginSettingTab {
       codexSupportHint.style.color = 'var(--text-warning)';
       codexSupportHint.style.marginTop = '-0.2em';
       codexSupportHint.style.marginBottom = '0.8em';
-      codexSupportHint.setText('Current Codex support: chat, instruction mode, external directories, images, command/tool stream, AI title generation. Inline edit, MCP, and Claude SDK slash commands are not wired yet.');
+      codexSupportHint.setText('Current Codex support: chat, inline edit, instruction mode, external directories, images, command/tool stream, AI title generation. MCP and Claude SDK slash commands are not wired yet.');
     }
 
     new Setting(containerEl)

@@ -1,35 +1,163 @@
-import type ClaudianPlugin from '../../main';
-import type { InlineEditRequest, InlineEditResult } from './InlineEditService';
+import { spawn, type ChildProcessWithoutNullStreams } from 'child_process';
+import * as readline from 'readline';
 
-/**
- * Placeholder Codex inline edit service.
- *
- * Inline edit remains disabled in Codex mode for now, but this service gives us
- * a clear integration seam so the next iteration can swap in a full Codex-based
- * implementation without reworking the modal/controller contracts again.
- */
+import type ClaudianPlugin from '../../main';
+import { appendContextFiles } from '../../utils/context';
+import { getVaultPath } from '../../utils/path';
+import {
+  buildInlineEditPrompt,
+  type InlineEditRequest,
+  type InlineEditResult,
+  parseInlineEditResponse,
+} from './InlineEditService';
+
+type CodexInlineEditEvent =
+  | { type: 'thread.started'; thread_id: string }
+  | { type: 'item.completed'; item?: { type?: string; text?: string } }
+  | { type: 'turn.failed'; error?: { message?: string } }
+  | { type: 'error'; message?: string };
+
 export class CodexInlineEditService {
-  constructor(private readonly plugin: ClaudianPlugin) {}
+  private plugin: ClaudianPlugin;
+  private runningProcess: ChildProcessWithoutNullStreams | null = null;
+  private threadId: string | null = null;
+
+  constructor(plugin: ClaudianPlugin) {
+    this.plugin = plugin;
+  }
 
   resetConversation(): void {
-    // No-op placeholder for interface parity.
+    this.threadId = null;
+  }
+
+  async editText(request: InlineEditRequest): Promise<InlineEditResult> {
+    this.threadId = null;
+    const prompt = buildInlineEditPrompt(request);
+    return this.sendMessage(prompt);
+  }
+
+  async continueConversation(message: string, contextFiles?: string[]): Promise<InlineEditResult> {
+    if (!this.threadId) {
+      return { success: false, error: 'No active conversation to continue' };
+    }
+    let prompt = message;
+    if (contextFiles && contextFiles.length > 0) {
+      prompt = appendContextFiles(message, contextFiles);
+    }
+    return this.sendMessage(prompt);
   }
 
   cancel(): void {
-    // No-op placeholder for interface parity.
+    if (this.runningProcess && !this.runningProcess.killed) {
+      try {
+        this.runningProcess.kill();
+      } catch {
+        // ignore
+      }
+    }
+    this.runningProcess = null;
   }
 
-  async editText(_request: InlineEditRequest): Promise<InlineEditResult> {
-    return {
-      success: false,
-      error: `${this.plugin.providerManager.getDescriptor('codex').label} inline edit is not wired yet.`,
-    };
+  private async sendMessage(prompt: string): Promise<InlineEditResult> {
+    const vaultPath = getVaultPath(this.plugin.app);
+    if (!vaultPath) {
+      return { success: false, error: 'Could not determine vault path' };
+    }
+
+    const resolvedCodexPath = this.plugin.getResolvedCodexCliPath();
+    if (!resolvedCodexPath) {
+      return { success: false, error: 'Codex CLI not found. Please install Codex CLI.' };
+    }
+
+    const commandArgs = [
+      'exec',
+      '--experimental-json',
+      '--skip-git-repo-check',
+      '--sandbox',
+      this.plugin.settings.allowExternalAccess ? 'danger-full-access' : 'workspace-write',
+      '--cd',
+      vaultPath,
+      '--config',
+      'approval_policy="never"',
+    ];
+
+    const model = this.plugin.settings.codexModel?.trim();
+    if (model) {
+      commandArgs.push('--model', model);
+    }
+
+    if (this.threadId) {
+      commandArgs.push('resume', this.threadId);
+    }
+
+    const child = spawn(resolvedCodexPath, commandArgs, {
+      cwd: vaultPath,
+      env: {
+        ...process.env,
+        GIT_TERMINAL_PROMPT: '0',
+      },
+      stdio: 'pipe',
+    });
+    this.runningProcess = child;
+
+    const exitPromise = new Promise<number | null>((resolve) => {
+      child.once('exit', (code) => resolve(code));
+    });
+
+    child.stdin.write(prompt);
+    child.stdin.end();
+
+    const rl = readline.createInterface({
+      input: child.stdout,
+      crlfDelay: Infinity,
+    });
+
+    let responseText = '';
+    let streamError: string | null = null;
+
+    try {
+      for await (const line of rl) {
+        const event = this.parseEvent(line);
+        if (!event) continue;
+        if (event.type === 'thread.started') {
+          this.threadId = event.thread_id;
+        } else if (event.type === 'item.completed' && event.item?.type === 'agent_message' && event.item.text) {
+          responseText += event.item.text;
+        } else if (event.type === 'turn.failed') {
+          streamError = event.error?.message ?? 'Codex inline edit failed';
+        } else if (event.type === 'error') {
+          streamError = event.message ?? 'Codex inline edit failed';
+        }
+      }
+
+      const exitCode = await exitPromise;
+      if (streamError) {
+        return { success: false, error: streamError };
+      }
+      if (exitCode !== 0) {
+        return { success: false, error: `Codex exited with code ${exitCode ?? 1}` };
+      }
+      return parseInlineEditResponse(responseText);
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    } finally {
+      this.runningProcess = null;
+      rl.close();
+      if (!child.killed) {
+        try {
+          child.kill();
+        } catch {
+          // ignore
+        }
+      }
+    }
   }
 
-  async continueConversation(_message: string, _contextFiles?: string[]): Promise<InlineEditResult> {
-    return {
-      success: false,
-      error: `${this.plugin.providerManager.getDescriptor('codex').label} inline edit is not wired yet.`,
-    };
+  private parseEvent(line: string): CodexInlineEditEvent | null {
+    try {
+      return JSON.parse(line) as CodexInlineEditEvent;
+    } catch {
+      return null;
+    }
   }
 }

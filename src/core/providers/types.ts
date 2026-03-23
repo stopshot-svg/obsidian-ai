@@ -38,7 +38,7 @@ export const PROVIDER_DESCRIPTORS: Record<ProviderId, ProviderDescriptor> = {
     status: 'experimental',
     description: 'Upcoming alternate runtime with matching Obsidian UI.',
     capabilities: {
-      inlineEdit: false,
+      inlineEdit: true,
       instructionRefine: true,
       mcp: false,
       persistentConversation: false,
