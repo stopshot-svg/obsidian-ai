@@ -118,7 +118,7 @@ export function getCliPlatformKey(): CliPlatformKey {
 export type HostnameCliPaths = Record<string, string>;
 
 /** Active AI runtime provider. */
-export type ProviderId = 'claude' | 'codex';
+export type ProviderId = 'claude' | 'codex' | 'gemini';
 
 /** Permission mode for tool execution. */
 export type PermissionMode = 'yolo' | 'plan' | 'normal';
@@ -252,6 +252,7 @@ export interface ClaudianSettings {
   // Model & thinking (Claudian uses enum, CC uses full model ID string)
   model: ClaudeModel;
   codexModel: string;  // Model ID used by Codex provider (empty = CLI default)
+  geminiModel: string;  // Model ID used by Gemini provider (empty = CLI default)
   thinkingBudget: ThinkingBudget;  // Legacy token budget for custom models
   effortLevel: EffortLevel;  // Effort level for adaptive thinking models
   enableAutoTitleGeneration: boolean;
@@ -290,6 +291,8 @@ export interface ClaudianSettings {
   claudeCliPathsByHost: HostnameCliPaths;  // Per-device paths keyed by hostname (preferred)
   codexCliPath: string;  // Legacy: single CLI path (for backwards compatibility)
   codexCliPathsByHost: HostnameCliPaths;  // Per-device paths keyed by hostname (preferred)
+  geminiCliPath: string;  // Legacy: single CLI path (for backwards compatibility)
+  geminiCliPathsByHost: HostnameCliPaths;  // Per-device paths keyed by hostname (preferred)
   loadUserClaudeSettings: boolean;  // Load ~/.claude/settings.json (may override permissions)
 
   // State (merged from data.json)
@@ -327,6 +330,7 @@ export const DEFAULT_SETTINGS: ClaudianSettings = {
   // Model & thinking
   model: 'haiku',
   codexModel: '',
+  geminiModel: '',
   thinkingBudget: 'off',
   effortLevel: 'high',
   enableAutoTitleGeneration: true,
@@ -363,6 +367,8 @@ export const DEFAULT_SETTINGS: ClaudianSettings = {
   claudeCliPathsByHost: {},  // Per-device paths keyed by hostname
   codexCliPath: '',  // Legacy field (empty = not migrated)
   codexCliPathsByHost: {},  // Per-device paths keyed by hostname
+  geminiCliPath: '',
+  geminiCliPathsByHost: {},
   loadUserClaudeSettings: true,  // Default on for compatibility
 
   lastClaudeModel: 'haiku',

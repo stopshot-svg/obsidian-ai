@@ -56,7 +56,11 @@ export class TabBar {
       stateClass = 'claudian-tab-badge-streaming';
     }
 
-    const providerLabel = item.provider === 'codex' ? 'Codex' : 'Claude';
+    const providerLabel = item.provider === 'codex'
+      ? 'Codex'
+      : item.provider === 'gemini'
+        ? 'Gemini'
+        : 'Claude';
     const tooltip = `${item.title} · ${providerLabel}`;
     const badgeEl = this.containerEl.createDiv({
       cls: `claudian-tab-badge ${stateClass}`,

@@ -46,4 +46,18 @@ export const PROVIDER_DESCRIPTORS: Record<ProviderId, ProviderDescriptor> = {
       titleGeneration: true,
     },
   },
+  gemini: {
+    id: 'gemini',
+    label: 'Gemini',
+    status: 'experimental',
+    description: 'Google Gemini CLI runtime using the shared Obsidian UI, with Ask/Auto approvals and optional Gemini CLI-managed model selection.',
+    capabilities: {
+      inlineEdit: false,
+      instructionRefine: false,
+      mcp: false,
+      persistentConversation: true,
+      slashCommands: false,
+      titleGeneration: false,
+    },
+  },
 };

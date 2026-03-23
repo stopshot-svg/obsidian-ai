@@ -41,6 +41,7 @@ import { ClaudeCliResolver } from './utils/claudeCli';
 import { CodexCliResolver } from './utils/codexCli';
 import { buildCursorContext } from './utils/editor';
 import { getCurrentModelFromEnvironment, getModelsFromEnvironment, parseEnvironmentVariables } from './utils/env';
+import { GeminiCliResolver } from './utils/geminiCli';
 import { getVaultPath } from './utils/path';
 import {
   deleteSDKSession,
@@ -207,6 +208,7 @@ export default class ClaudianPlugin extends Plugin {
   storage: StorageService;
   cliResolver: ClaudeCliResolver;
   codexCliResolver: CodexCliResolver;
+  geminiCliResolver: GeminiCliResolver;
   providerManager: ProviderManager;
   private conversations: Conversation[] = [];
   private runtimeEnvironmentVariables = '';
@@ -241,6 +243,7 @@ export default class ClaudianPlugin extends Plugin {
 
     this.cliResolver = new ClaudeCliResolver();
     this.codexCliResolver = new CodexCliResolver();
+    this.geminiCliResolver = new GeminiCliResolver();
     this.providerManager = new ProviderManager();
 
     try {
@@ -514,7 +517,7 @@ export default class ClaudianPlugin extends Plugin {
       const meta = await this.storage.sessions.loadMetadata(conversation.id);
       if (!meta) continue;
 
-      conversation.isNative = (meta.provider ?? 'claude') !== 'codex';
+      conversation.isNative = (meta.provider ?? 'claude') === 'claude';
       conversation.title = meta.title ?? conversation.title;
       conversation.titleGenerationStatus = meta.titleGenerationStatus ?? conversation.titleGenerationStatus;
       conversation.createdAt = meta.createdAt ?? conversation.createdAt;
@@ -567,7 +570,7 @@ export default class ClaudianPlugin extends Plugin {
           usage: meta.usage,
           titleGenerationStatus: meta.titleGenerationStatus,
           legacyCutoffAt: meta.legacyCutoffAt,
-          isNative: (meta.provider ?? 'claude') !== 'codex',
+          isNative: (meta.provider ?? 'claude') === 'claude',
           subagentData: meta.subagentData, // Preserve for applying to loaded messages
           resumeSessionAt: meta.resumeSessionAt,
           forkSource: meta.forkSource,
@@ -763,6 +766,14 @@ export default class ClaudianPlugin extends Plugin {
     );
   }
 
+  getResolvedGeminiCliPath(): string | null {
+    return this.geminiCliResolver.resolve(
+      this.settings.geminiCliPathsByHost,
+      this.settings.geminiCliPath,
+      this.getActiveEnvironmentVariables()
+    );
+  }
+
   getActiveProviderId(): ProviderId {
     return this.providerManager.getActiveProviderId(this.settings);
   }
@@ -879,7 +890,9 @@ export default class ClaudianPlugin extends Plugin {
       // For native sessions without loaded messages, indicate it's a persisted session
       // rather than "New conversation" which implies no content exists
       if (conv.isNative) {
-        return conv.provider === 'codex' ? 'Codex session' : 'SDK session';
+        if (conv.provider === 'codex') return 'Codex session';
+        if (conv.provider === 'gemini') return 'Gemini session';
+        return 'SDK session';
       }
       return 'New conversation';
     }
@@ -895,7 +908,7 @@ export default class ClaudianPlugin extends Plugin {
 
   private async loadSdkMessagesForConversation(conversation: Conversation): Promise<void> {
     if (!conversation.isNative || conversation.sdkMessagesLoaded) return;
-    if (conversation.provider === 'codex') {
+    if (conversation.provider !== 'claude') {
       conversation.sdkMessagesLoaded = true;
       return;
     }
@@ -1136,7 +1149,7 @@ export default class ClaudianPlugin extends Plugin {
   async createConversation(sessionId?: string, providerId?: ProviderId): Promise<Conversation> {
     const conversationId = sessionId ?? this.generateConversationId();
     const effectiveProvider = providerId ?? this.getEffectiveProviderId();
-    const isNative = effectiveProvider !== 'codex';
+    const isNative = effectiveProvider === 'claude';
     const conversation: Conversation = {
       id: conversationId,
       provider: effectiveProvider,
@@ -1187,7 +1200,7 @@ export default class ClaudianPlugin extends Plugin {
 
     const vaultPath = getVaultPath(this.app);
     const sdkSessionId = conversation.sdkSessionId ?? conversation.sessionId;
-    if (vaultPath && sdkSessionId && conversation.provider !== 'codex') {
+    if (vaultPath && sdkSessionId && conversation.provider === 'claude') {
       await deleteSDKSession(vaultPath, sdkSessionId);
     }
 
@@ -1197,7 +1210,7 @@ export default class ClaudianPlugin extends Plugin {
     } else {
       // Legacy session: delete JSONL file
       await this.storage.sessions.deleteConversation(id);
-      if (conversation.provider === 'codex') {
+      if (conversation.provider !== 'claude') {
         await this.storage.sessions.deleteMetadata(id).catch(() => {});
       }
     }
@@ -1232,7 +1245,7 @@ export default class ClaudianPlugin extends Plugin {
     } else {
       // Legacy session: save full JSONL
       await this.storage.sessions.saveConversation(conversation);
-      if (conversation.provider === 'codex') {
+      if (conversation.provider !== 'claude') {
         await this.storage.sessions.deleteMetadata(id).catch(() => {});
       }
     }
@@ -1261,7 +1274,7 @@ export default class ClaudianPlugin extends Plugin {
     } else {
       // Legacy session: save full JSONL
       await this.storage.sessions.saveConversation(conversation);
-      if (conversation.provider === 'codex') {
+      if (conversation.provider !== 'claude') {
         await this.storage.sessions.deleteMetadata(id).catch(() => {});
       }
     }
