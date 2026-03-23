@@ -80,11 +80,14 @@ export class ClaudianView extends ItemView {
 
   /** Refreshes model-dependent UI across all tabs (used after settings/env changes). */
   refreshModelSelector(): void {
-    const model = this.plugin.settings.model;
-    const contextWindow = getContextWindowSize(model, this.plugin.settings.customContextLimits);
-
     for (const tab of this.tabManager?.getAllTabs() ?? []) {
-      if (tab.state.usage) {
+      const providerId = tab.serviceProviderId
+        ?? (tab.conversationId ? this.plugin.getConversationSync(tab.conversationId)?.provider : null)
+        ?? this.plugin.getActiveProviderId();
+
+      if (tab.state.usage && providerId !== 'codex') {
+        const model = this.plugin.settings.model;
+        const contextWindow = getContextWindowSize(model, this.plugin.settings.customContextLimits);
         const percentage = Math.min(100, Math.max(0, Math.round((tab.state.usage.contextTokens / contextWindow) * 100)));
         tab.state.usage = { ...tab.state.usage, model, contextWindow, percentage };
       }
