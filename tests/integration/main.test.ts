@@ -426,10 +426,11 @@ describe('ClaudianPlugin', () => {
       await plugin.onload();
 
       const conv = await plugin.createConversation(undefined, 'codex');
+      expect(conv.isNative).toBe(false);
       const list = plugin.getConversationList();
       const entry = list.find((item) => item.id === conv.id);
 
-      expect(entry?.preview).toBe('Codex session');
+      expect(entry?.preview).toBe('New conversation');
     });
 
     it('should generate default title with timestamp', async () => {
@@ -503,6 +504,21 @@ describe('ClaudianPlugin', () => {
       await plugin.switchConversation(conv.id);
 
       expect(sdkSpy).not.toHaveBeenCalled();
+    });
+
+    it('persists codex conversations as JSONL instead of metadata-only', async () => {
+      await plugin.onload();
+
+      const conv = await plugin.createConversation(undefined, 'codex');
+      const saveJsonlSpy = jest.spyOn(plugin.storage.sessions, 'saveConversation');
+      const saveMetaSpy = jest.spyOn(plugin.storage.sessions, 'saveMetadata');
+
+      await plugin.updateConversation(conv.id, {
+        messages: [{ id: 'm1', role: 'user', content: 'hello', timestamp: Date.now() }],
+      });
+
+      expect(saveJsonlSpy).toHaveBeenCalled();
+      expect(saveMetaSpy).not.toHaveBeenCalled();
     });
   });
 

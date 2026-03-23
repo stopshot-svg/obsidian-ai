@@ -430,7 +430,7 @@ export default class ClaudianPlugin extends Plugin {
       const meta = await this.storage.sessions.loadMetadata(conversation.id);
       if (!meta) continue;
 
-      conversation.isNative = true;
+      conversation.isNative = (meta.provider ?? 'claude') !== 'codex';
       conversation.title = meta.title ?? conversation.title;
       conversation.titleGenerationStatus = meta.titleGenerationStatus ?? conversation.titleGenerationStatus;
       conversation.createdAt = meta.createdAt ?? conversation.createdAt;
@@ -483,7 +483,7 @@ export default class ClaudianPlugin extends Plugin {
           usage: meta.usage,
           titleGenerationStatus: meta.titleGenerationStatus,
           legacyCutoffAt: meta.legacyCutoffAt,
-          isNative: true,
+          isNative: (meta.provider ?? 'claude') !== 'codex',
           subagentData: meta.subagentData, // Preserve for applying to loaded messages
           resumeSessionAt: meta.resumeSessionAt,
           forkSource: meta.forkSource,
@@ -1051,16 +1051,17 @@ export default class ClaudianPlugin extends Plugin {
    */
   async createConversation(sessionId?: string, providerId?: ProviderId): Promise<Conversation> {
     const conversationId = sessionId ?? this.generateConversationId();
+    const effectiveProvider = providerId ?? this.getEffectiveProviderId();
     const conversation: Conversation = {
       id: conversationId,
-      provider: providerId ?? this.getEffectiveProviderId(),
+      provider: effectiveProvider,
       title: this.generateDefaultTitle(),
       createdAt: Date.now(),
       updatedAt: Date.now(),
       sessionId: sessionId ?? null,
       sdkSessionId: sessionId ?? undefined,
       messages: [],
-      isNative: true,
+      isNative: effectiveProvider !== 'codex',
     };
 
     this.conversations.unshift(conversation);
@@ -1111,6 +1112,9 @@ export default class ClaudianPlugin extends Plugin {
     } else {
       // Legacy session: delete JSONL file
       await this.storage.sessions.deleteConversation(id);
+      if (conversation.provider === 'codex') {
+        await this.storage.sessions.deleteMetadata(id).catch(() => {});
+      }
     }
 
     // Notify all views/tabs that have this conversation open
@@ -1143,6 +1147,9 @@ export default class ClaudianPlugin extends Plugin {
     } else {
       // Legacy session: save full JSONL
       await this.storage.sessions.saveConversation(conversation);
+      if (conversation.provider === 'codex') {
+        await this.storage.sessions.deleteMetadata(id).catch(() => {});
+      }
     }
   }
 
@@ -1169,6 +1176,9 @@ export default class ClaudianPlugin extends Plugin {
     } else {
       // Legacy session: save full JSONL
       await this.storage.sessions.saveConversation(conversation);
+      if (conversation.provider === 'codex') {
+        await this.storage.sessions.deleteMetadata(id).catch(() => {});
+      }
     }
 
     // Clear image data from memory after save (data is persisted by SDK or JSONL).
