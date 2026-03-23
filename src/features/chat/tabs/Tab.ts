@@ -535,10 +535,14 @@ function initializeInputToolbar(tab: TabData, plugin: ClaudianPlugin): void {
   tab.ui.mcpServerSelector = toolbarComponents.mcpServerSelector;
   tab.ui.permissionToggle = toolbarComponents.permissionToggle;
 
-  tab.ui.mcpServerSelector.setMcpManager(plugin.mcpManager);
+  const providerDescriptor = plugin.providerManager.getDescriptor(resolveTabProviderId());
+  tab.ui.mcpServerSelector.setMcpManager(
+    providerDescriptor.capabilities.mcp ? plugin.mcpManager : null
+  );
 
   // Sync @-mentions to UI selector
   tab.ui.fileContextManager?.setOnMcpMentionChange((servers) => {
+    if (!providerDescriptor.capabilities.mcp) return;
     tab.ui.mcpServerSelector?.addMentionedServers(servers);
   });
 

@@ -98,11 +98,20 @@ function createMockDeps(overrides: Partial<InputControllerDeps> = {}): InputCont
       saveSettings: jest.fn(),
       settings: {
         slashCommands: [],
+        provider: 'claude',
         blockedCommands: { unix: [], windows: [] },
         enableBlocklist: true,
         permissionMode: 'yolo',
         enableAutoTitleGeneration: true,
       },
+      providerManager: {
+        getDescriptor: jest.fn((providerId: string) => ({
+          capabilities: {
+            mcp: providerId !== 'codex',
+          },
+        })),
+      },
+      getActiveProviderId: jest.fn(function(this: any) { return this.settings.provider ?? 'claude'; }),
       mcpManager: {
         extractMentions: jest.fn().mockReturnValue(new Set()),
         transformMentions: jest.fn().mockImplementation((text: string) => text),
@@ -470,6 +479,19 @@ describe('InputController - Message Queue', () => {
       const queryOptions = queryCall[3];
       expect(queryOptions.mcpMentions).toBe(mcpMentions);
       expect(queryOptions.enabledMcpServers).toBe(enabledServers);
+    });
+
+    it('should skip MCP extraction for codex provider', async () => {
+      const deps = createMockDeps();
+      deps.plugin.settings.provider = 'codex';
+      const localController = new InputController(deps);
+      deps.mockAgentService.query.mockImplementation(() => createMockStream([{ type: 'done' }]));
+      inputEl.value = 'hello';
+
+      await localController.sendMessage();
+
+      expect(deps.plugin.mcpManager.extractMentions).not.toHaveBeenCalled();
+      expect(deps.plugin.mcpManager.transformMentions).not.toHaveBeenCalled();
     });
 
     it('should append browser selection context when available', async () => {

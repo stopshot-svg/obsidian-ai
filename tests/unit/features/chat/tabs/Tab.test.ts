@@ -1039,6 +1039,20 @@ describe('Tab - UI Initialization', () => {
       expect(mockMcpServerSelector.setMcpManager).toHaveBeenCalledWith(options.plugin.mcpManager);
     });
 
+    it('should disable MCP server selector for codex provider', () => {
+      const plugin = createMockPlugin({
+        settings: {
+          ...createMockPlugin().settings,
+          provider: 'codex',
+        },
+      });
+      const tab = createTab(createMockOptions({ plugin }));
+
+      initializeTabUI(tab, plugin);
+
+      expect(mockMcpServerSelector.setMcpManager).toHaveBeenCalledWith(null);
+    });
+
     it('should wire external context selector onChange', () => {
       const options = createMockOptions();
       const tab = createTab(options);

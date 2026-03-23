@@ -300,20 +300,28 @@ export class InputController {
     );
     state.responseStartTime = performance.now();
 
-    // Extract @-mentioned MCP servers from prompt
-    const mcpMentions = plugin.mcpManager.extractMentions(promptToSend);
+    const effectiveProvider = typeof plugin.getEffectiveProviderId === 'function'
+      ? plugin.getEffectiveProviderId()
+      : (typeof plugin.getActiveProviderId === 'function'
+        ? plugin.getActiveProviderId()
+        : (plugin.settings.provider ?? 'claude'));
+    const providerDescriptor = plugin.providerManager?.getDescriptor?.(effectiveProvider);
+    if (providerDescriptor?.capabilities.mcp !== false) {
+      // Extract @-mentioned MCP servers from prompt
+      const mcpMentions = plugin.mcpManager.extractMentions(promptToSend);
 
-    // Transform @mcpname to @mcpname MCP in API request only
-    promptToSend = plugin.mcpManager.transformMentions(promptToSend);
+      // Transform @mcpname to @mcpname MCP in API request only
+      promptToSend = plugin.mcpManager.transformMentions(promptToSend);
 
-    // Add MCP options to query
-    const enabledMcpServers = mcpServerSelector?.getEnabledServers();
-    if (mcpMentions.size > 0 || (enabledMcpServers && enabledMcpServers.size > 0)) {
-      queryOptions = {
-        ...queryOptions,
-        mcpMentions,
-        enabledMcpServers,
-      };
+      // Add MCP options to query
+      const enabledMcpServers = mcpServerSelector?.getEnabledServers();
+      if (mcpMentions.size > 0 || (enabledMcpServers && enabledMcpServers.size > 0)) {
+        queryOptions = {
+          ...queryOptions,
+          mcpMentions,
+          enabledMcpServers,
+        };
+      }
     }
 
     // Add external context paths to query
