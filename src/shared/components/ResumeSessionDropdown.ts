@@ -153,6 +153,12 @@ export class ResumeSessionDropdown {
       const content = item.createDiv({ cls: 'claudian-resume-item-content' });
       const titleEl = content.createDiv({ cls: 'claudian-resume-item-title', text: conv.title });
       titleEl.setAttribute('title', conv.title);
+      const providerLabel = (conv.provider ?? 'claude') === 'codex' ? 'Codex' : 'Claude';
+      const providerEl = content.createDiv({
+        cls: 'claudian-resume-item-provider',
+        text: providerLabel,
+      });
+      providerEl.setAttribute('aria-label', `Provider: ${providerLabel}`);
       content.createDiv({
         cls: 'claudian-resume-item-date',
         text: isCurrent ? 'Current session' : this.formatDate(conv.lastResponseAt ?? conv.createdAt),

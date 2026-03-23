@@ -67,6 +67,18 @@ function getRenderedItems(containerEl: any): { title: string; isCurrent: boolean
   });
 }
 
+function getProviderLabels(containerEl: any): string[] {
+  const dropdownEl = containerEl.children.find(
+    (c: any) => c.hasClass('claudian-resume-dropdown')
+  );
+  if (!dropdownEl) return [];
+  const items = dropdownEl.querySelectorAll('.claudian-resume-item');
+  return items.map((item: any) => {
+    const el = item.querySelector?.('.claudian-resume-item-provider');
+    return el?.textContent ?? '';
+  });
+}
+
 describe('ResumeSessionDropdown', () => {
   let containerEl: any;
   let inputEl: any;
@@ -123,6 +135,24 @@ describe('ResumeSessionDropdown', () => {
 
       const otherItem = items.find(i => i.title === 'First Chat');
       expect(otherItem?.isCurrent).toBe(false);
+
+      dropdown.destroy();
+    });
+
+    it('shows provider labels for conversations', () => {
+      const dropdown = new ResumeSessionDropdown(
+        containerEl,
+        inputEl,
+        [
+          createConversation('conv-1', 'Claude Chat', { provider: 'claude' }),
+          createConversation('conv-2', 'Codex Chat', { provider: 'codex', lastResponseAt: Date.now() }),
+        ],
+        null,
+        callbacks
+      );
+
+      expect(getProviderLabels(containerEl)).toContain('Claude');
+      expect(getProviderLabels(containerEl)).toContain('Codex');
 
       dropdown.destroy();
     });
