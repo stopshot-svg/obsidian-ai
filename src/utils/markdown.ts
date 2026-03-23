@@ -23,3 +23,35 @@ export function appendMarkdownSnippet(existingPrompt: string, snippet: string): 
 
   return existingPrompt + separator + trimmedSnippet;
 }
+
+function normalizeCliMarkdownSection(section: string): string {
+  const lines = section.split('\n');
+  const normalized: string[] = [];
+
+  for (const line of lines) {
+    const trimmed = line.trimStart();
+    const needsLeadingGap = /^(#{1,4}\s|[-*]\s|\d+\.\s|>\s)/.test(trimmed);
+    const previousLine = normalized.length > 0 ? normalized[normalized.length - 1] : '';
+
+    if (needsLeadingGap && previousLine.trim() !== '' && previousLine.trim() !== '---') {
+      normalized.push('');
+    }
+
+    normalized.push(line);
+  }
+
+  return normalized.join('\n');
+}
+
+/** Lightly improves markdown segmentation for CLI-generated answers without touching fenced code blocks. */
+export function normalizeCliAnswerMarkdown(markdown: string): string {
+  if (!markdown.trim()) {
+    return markdown;
+  }
+
+  return markdown
+    .replace(/\r\n/g, '\n')
+    .split(/(```[\s\S]*?```)/g)
+    .map((section) => section.startsWith('```') ? section : normalizeCliMarkdownSection(section))
+    .join('');
+}

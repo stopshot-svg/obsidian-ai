@@ -8,6 +8,7 @@ import type ClaudianPlugin from '../../../main';
 import { formatDurationMmSs } from '../../../utils/date';
 import { processFileLinks, registerFileLinkHandler } from '../../../utils/fileLink';
 import { replaceImageEmbedsWithHtml } from '../../../utils/imageEmbed';
+import { normalizeCliAnswerMarkdown } from '../../../utils/markdown';
 import { findRewindContext } from '../rewind';
 import {
   renderStoredAsyncSubagent,
@@ -481,8 +482,12 @@ export class MessageRenderer {
 
     try {
       // Replace image embeds with HTML img tags before rendering
+      const provider = el.getAttribute('data-provider');
+      const normalizedMarkdown = provider === 'codex'
+        ? normalizeCliAnswerMarkdown(markdown)
+        : markdown;
       const processedMarkdown = replaceImageEmbedsWithHtml(
-        markdown,
+        normalizedMarkdown,
         this.app,
         this.plugin.settings.mediaFolder
       );
