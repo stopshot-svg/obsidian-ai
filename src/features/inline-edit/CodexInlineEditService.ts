@@ -3,6 +3,7 @@ import * as readline from 'readline';
 
 import type ClaudianPlugin from '../../main';
 import { appendContextFiles } from '../../utils/context';
+import { parseEnvironmentVariables } from '../../utils/env';
 import { getVaultPath } from '../../utils/path';
 import {
   buildInlineEditPrompt,
@@ -92,10 +93,7 @@ export class CodexInlineEditService {
 
     const child = spawn(resolvedCodexPath, commandArgs, {
       cwd: vaultPath,
-      env: {
-        ...process.env,
-        GIT_TERMINAL_PROMPT: '0',
-      },
+      env: this.buildExecEnv(),
       stdio: 'pipe',
     });
     this.runningProcess = child;
@@ -159,5 +157,15 @@ export class CodexInlineEditService {
     } catch {
       return null;
     }
+  }
+
+  private buildExecEnv(): NodeJS.ProcessEnv {
+    const env: NodeJS.ProcessEnv = { ...process.env };
+    const customEnv = parseEnvironmentVariables(this.plugin.getActiveEnvironmentVariables?.() ?? '');
+    for (const [key, value] of Object.entries(customEnv)) {
+      env[key] = value;
+    }
+    env.GIT_TERMINAL_PROMPT = '0';
+    return env;
   }
 }

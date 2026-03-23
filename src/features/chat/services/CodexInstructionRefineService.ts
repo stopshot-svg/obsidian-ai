@@ -4,6 +4,7 @@ import * as readline from 'readline';
 import { buildRefineSystemPrompt } from '../../../core/prompts/instructionRefine';
 import type { InstructionRefineResult } from '../../../core/types';
 import type ClaudianPlugin from '../../../main';
+import { parseEnvironmentVariables } from '../../../utils/env';
 import { getVaultPath } from '../../../utils/path';
 import type { InstructionRefineServiceLike, RefineProgressCallback } from './InstructionRefineService';
 
@@ -97,10 +98,7 @@ export class CodexInstructionRefineService implements InstructionRefineServiceLi
     const fullPrompt = `${buildRefineSystemPrompt(this.existingInstructions)}\n\n${prompt}`;
     const child = spawn(resolvedCodexPath, commandArgs, {
       cwd: vaultPath,
-      env: {
-        ...process.env,
-        GIT_TERMINAL_PROMPT: '0',
-      },
+      env: this.buildExecEnv(),
       stdio: 'pipe',
     });
     this.runningProcess = child;
@@ -181,5 +179,15 @@ export class CodexInstructionRefineService implements InstructionRefineServiceLi
     } catch {
       return null;
     }
+  }
+
+  private buildExecEnv(): NodeJS.ProcessEnv {
+    const env: NodeJS.ProcessEnv = { ...process.env };
+    const customEnv = parseEnvironmentVariables(this.plugin.getActiveEnvironmentVariables?.() ?? '');
+    for (const [key, value] of Object.entries(customEnv)) {
+      env[key] = value;
+    }
+    env.GIT_TERMINAL_PROMPT = '0';
+    return env;
   }
 }
