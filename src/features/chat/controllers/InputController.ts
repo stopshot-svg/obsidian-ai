@@ -18,7 +18,7 @@ import { type InlineAskQuestionConfig, InlineAskUserQuestion } from '../renderin
 import { InlineExitPlanMode } from '../rendering/InlineExitPlanMode';
 import type { MessageRenderer } from '../rendering/MessageRenderer';
 import { setToolIcon, updateToolCallResult } from '../rendering/ToolCallRenderer';
-import type { InstructionRefineService } from '../services/InstructionRefineService';
+import type { InstructionRefineServiceLike } from '../services/InstructionRefineService';
 import type { SubagentManager } from '../services/SubagentManager';
 import type { TitleGenerationServiceLike } from '../services/TitleGenerationService';
 import type { ChatState } from '../state/ChatState';
@@ -56,7 +56,7 @@ export interface InputControllerDeps {
     addExternalContext: (path: string) => AddExternalContextResult;
   } | null;
   getInstructionModeManager: () => InstructionModeManager | null;
-  getInstructionRefineService: () => InstructionRefineService | null;
+  getInstructionRefineService: () => InstructionRefineServiceLike | null;
   getTitleGenerationService: () => TitleGenerationServiceLike | null;
   getStatusPanel: () => StatusPanel | null;
   getInputContainerEl: () => HTMLElement;

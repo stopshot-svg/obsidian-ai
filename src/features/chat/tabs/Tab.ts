@@ -22,6 +22,7 @@ import {
 import { cleanupThinkingBlock, MessageRenderer } from '../rendering';
 import { findRewindContext } from '../rewind';
 import { BangBashService } from '../services/BangBashService';
+import { CodexInstructionRefineService } from '../services/CodexInstructionRefineService';
 import { CodexTitleGenerationService } from '../services/CodexTitleGenerationService';
 import { InstructionRefineService } from '../services/InstructionRefineService';
 import { SubagentManager } from '../services/SubagentManager';
@@ -398,7 +399,9 @@ function initializeInstructionAndTodo(tab: TabData, plugin: ClaudianPlugin): voi
   const provider = plugin.providerManager.getDescriptor(conversationProvider ?? plugin.getActiveProviderId());
 
   tab.services.instructionRefineService = provider.capabilities.instructionRefine
-    ? new InstructionRefineService(plugin)
+    ? (provider.id === 'codex'
+      ? new CodexInstructionRefineService(plugin)
+      : new InstructionRefineService(plugin))
     : null;
   tab.services.titleGenerationService = provider.capabilities.titleGeneration
     ? (provider.id === 'codex'

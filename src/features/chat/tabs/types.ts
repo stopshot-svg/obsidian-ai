@@ -13,7 +13,8 @@ import type {
   StreamController,
 } from '../controllers';
 import type { MessageRenderer } from '../rendering';
-import type { InstructionRefineService } from '../services/InstructionRefineService';
+import type { CodexInstructionRefineService } from '../services/CodexInstructionRefineService';
+import type { InstructionRefineService, InstructionRefineServiceLike } from '../services/InstructionRefineService';
 import type { SubagentManager } from '../services/SubagentManager';
 import type { CodexTitleGenerationService } from '../services/CodexTitleGenerationService';
 import type { TitleGenerationService, TitleGenerationServiceLike } from '../services/TitleGenerationService';
@@ -118,7 +119,7 @@ export interface TabControllers {
  */
 export interface TabServices {
   subagentManager: SubagentManager;
-  instructionRefineService: InstructionRefineService | null;
+  instructionRefineService: InstructionRefineServiceLike | null;
   titleGenerationService: TitleGenerationServiceLike | null;
 }
 

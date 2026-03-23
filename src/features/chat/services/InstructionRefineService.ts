@@ -9,7 +9,21 @@ import { getVaultPath } from '../../../utils/path';
 
 export type RefineProgressCallback = (update: InstructionRefineResult) => void;
 
-export class InstructionRefineService {
+export interface InstructionRefineServiceLike {
+  resetConversation(): void;
+  refineInstruction(
+    rawInstruction: string,
+    existingInstructions: string,
+    onProgress?: RefineProgressCallback
+  ): Promise<InstructionRefineResult>;
+  continueConversation(
+    message: string,
+    onProgress?: RefineProgressCallback
+  ): Promise<InstructionRefineResult>;
+  cancel(): void;
+}
+
+export class InstructionRefineService implements InstructionRefineServiceLike {
   private plugin: ClaudianPlugin;
   private abortController: AbortController | null = null;
   private sessionId: string | null = null;
