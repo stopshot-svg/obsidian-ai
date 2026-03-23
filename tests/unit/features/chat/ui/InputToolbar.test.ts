@@ -182,6 +182,46 @@ describe('ModelSelector', () => {
     expect(options.find((o: any) => o.children[0]?.textContent === 'Sonnet')).toBeUndefined();
     expect(parentEl.querySelector('.claudian-model-label')?.textContent).toBe('Opus 1M');
   });
+
+  it('should show Codex CLI managed label when Codex model is unset', () => {
+    callbacks.getSettings.mockReturnValue({
+      provider: 'codex',
+      codexModel: '',
+      model: 'sonnet',
+      thinkingBudget: 'low',
+      effortLevel: 'high',
+      permissionMode: 'normal',
+      enableOpus1M: false,
+      enableSonnet1M: false,
+    });
+
+    selector.renderOptions();
+    selector.updateDisplay();
+
+    expect(parentEl.querySelector('.claudian-model-label')?.textContent).toBe('Managed by Codex CLI');
+  });
+
+  it('should render common Codex models in the dropdown', () => {
+    callbacks.getSettings.mockReturnValue({
+      provider: 'codex',
+      codexModel: '',
+      model: 'sonnet',
+      thinkingBudget: 'low',
+      effortLevel: 'high',
+      permissionMode: 'normal',
+      enableOpus1M: false,
+      enableSonnet1M: false,
+    });
+
+    selector.renderOptions();
+
+    const dropdown = parentEl.querySelector('.claudian-model-dropdown');
+    const options = dropdown?.children || [];
+    const labels = options.map((option: any) => option.children[0]?.textContent);
+    expect(labels).toContain('Managed by Codex CLI');
+    expect(labels).toContain('GPT-5.4');
+    expect(labels).toContain('GPT-5');
+  });
 });
 
 describe('ThinkingBudgetSelector', () => {
@@ -418,6 +458,38 @@ describe('PermissionToggle', () => {
     const toggle = parentEl2.querySelector('.claudian-toggle-switch');
     await toggle?.dispatchEvent('click');
     expect(callbacks.onPermissionModeChange).toHaveBeenCalledWith('normal');
+  });
+
+  it('should use Codex approval labels for Codex provider', () => {
+    callbacks.getSettings.mockReturnValue({
+      provider: 'codex',
+      codexModel: '',
+      model: 'sonnet',
+      thinkingBudget: 'low',
+      effortLevel: 'high',
+      permissionMode: 'normal',
+      enableOpus1M: false,
+      enableSonnet1M: false,
+    });
+    const codexParent = createMockEl();
+    new PermissionToggle(codexParent, callbacks);
+    expect(codexParent.querySelector('.claudian-permission-label')?.textContent).toBe('Ask');
+  });
+
+  it('should show Auto label for Codex yolo mode', () => {
+    callbacks.getSettings.mockReturnValue({
+      provider: 'codex',
+      codexModel: '',
+      model: 'sonnet',
+      thinkingBudget: 'low',
+      effortLevel: 'high',
+      permissionMode: 'yolo',
+      enableOpus1M: false,
+      enableSonnet1M: false,
+    });
+    const codexParent = createMockEl();
+    new PermissionToggle(codexParent, callbacks);
+    expect(codexParent.querySelector('.claudian-permission-label')?.textContent).toBe('Auto');
   });
 });
 

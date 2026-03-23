@@ -59,13 +59,23 @@ export class ModelSelector {
     const settings = this.callbacks.getSettings();
     if (settings.provider === 'codex') {
       const codexModel = settings.codexModel.trim();
-      return [{
-        value: codexModel || '__codex_default__',
-        label: codexModel || 'Codex default',
-        description: codexModel
-          ? 'Current Codex model from plugin settings.'
-          : 'Uses the Codex CLI default model. Configure a specific model in Settings → Provider.',
-      }];
+      const codexModels = [
+        { value: '__codex_default__', label: 'Managed by Codex CLI', description: 'Use the model configured in your local Codex environment.' },
+        { value: 'gpt-5.4', label: 'GPT-5.4', description: 'General-purpose GPT-5.4 model.' },
+        { value: 'gpt-5', label: 'GPT-5', description: 'Balanced GPT-5 model.' },
+        { value: 'gpt-5-mini', label: 'GPT-5 Mini', description: 'Faster, lower-cost GPT-5 variant.' },
+        { value: 'gpt-5-codex', label: 'GPT-5 Codex', description: 'Codex-oriented GPT-5 model where supported.' },
+      ];
+
+      if (codexModel && !codexModels.some((model) => model.value === codexModel)) {
+        codexModels.unshift({
+          value: codexModel,
+          label: codexModel,
+          description: 'Current Codex model from plugin settings.',
+        });
+      }
+
+      return codexModels;
     }
 
     const models = [...DEFAULT_CLAUDE_MODELS];
@@ -287,7 +297,9 @@ export class PermissionToggle {
   updateDisplay() {
     if (!this.toggleEl || !this.labelEl) return;
 
-    const mode = this.callbacks.getSettings().permissionMode;
+    const settings = this.callbacks.getSettings();
+    const mode = settings.permissionMode;
+    const isCodex = settings.provider === 'codex';
 
     if (mode === 'plan') {
       this.toggleEl.style.display = 'none';
@@ -298,10 +310,10 @@ export class PermissionToggle {
       this.labelEl.removeClass('plan-active');
       if (mode === 'yolo') {
         this.toggleEl.addClass('active');
-        this.labelEl.setText('YOLO');
+        this.labelEl.setText(isCodex ? 'Auto' : 'YOLO');
       } else {
         this.toggleEl.removeClass('active');
-        this.labelEl.setText('Safe');
+        this.labelEl.setText(isCodex ? 'Ask' : 'Safe');
       }
     }
   }

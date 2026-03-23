@@ -3,7 +3,7 @@ import { ItemView, Notice, Scope, setIcon } from 'obsidian';
 
 import { getContextWindowSize, VIEW_TYPE_CLAUDIAN } from '../../core/types';
 import type ClaudianPlugin from '../../main';
-import { LOGO_SVG } from './constants';
+import { LOGO_SVG, OPENAI_LOGO_SVG } from './constants';
 import { TabBar, TabManager, updatePlanModeUI } from './tabs';
 import type { TabData, TabId } from './tabs/types';
 
@@ -111,6 +111,27 @@ export class ClaudianView extends ItemView {
     const suffix = provider.status === 'experimental' ? ' · Experimental' : '';
     this.providerBadgeEl.setText(`${provider.label}${suffix}`);
     this.providerBadgeEl.setAttribute('aria-label', `Current provider: ${provider.label}`);
+    this.refreshProviderLogo(providerId);
+  }
+
+  private refreshProviderLogo(providerId: 'claude' | 'codex'): void {
+    if (!this.logoEl) {
+      return;
+    }
+
+    const logo = providerId === 'codex' ? OPENAI_LOGO_SVG : LOGO_SVG;
+    this.logoEl.empty();
+
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', logo.viewBox);
+    svg.setAttribute('width', logo.width);
+    svg.setAttribute('height', logo.height);
+    svg.setAttribute('fill', 'none');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', logo.path);
+    path.setAttribute('fill', logo.fill);
+    svg.appendChild(path);
+    this.logoEl.appendChild(svg);
   }
 
   /** Updates hidden slash commands on all tabs (used after settings change). */
@@ -234,16 +255,7 @@ export class ClaudianView extends ItemView {
 
     // Logo (hidden when 2+ tabs)
     this.logoEl = this.titleSlotEl.createSpan({ cls: 'claudian-logo' });
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('viewBox', LOGO_SVG.viewBox);
-    svg.setAttribute('width', LOGO_SVG.width);
-    svg.setAttribute('height', LOGO_SVG.height);
-    svg.setAttribute('fill', 'none');
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('d', LOGO_SVG.path);
-    path.setAttribute('fill', LOGO_SVG.fill);
-    svg.appendChild(path);
-    this.logoEl.appendChild(svg);
+    this.refreshProviderLogo(this.plugin.getActiveProviderId());
 
     // Title text (hidden in header mode when 2+ tabs)
     this.titleTextEl = this.titleSlotEl.createEl('h4', { text: 'Obsidian AI', cls: 'claudian-title-text' });
