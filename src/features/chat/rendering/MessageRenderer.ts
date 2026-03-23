@@ -228,6 +228,10 @@ export class MessageRenderer {
             continue;
           }
           const textEl = contentEl.createDiv({ cls: 'claudian-text-block' });
+          if (msg.provider === 'codex') {
+            textEl.setAttribute('data-provider', 'codex');
+            textEl.setAttribute('data-stage', 'final');
+          }
           void this.renderContent(textEl, block.content);
           this.addTextCopyButton(textEl, block.content);
         } else if (block.type === 'tool_use') {
@@ -262,6 +266,10 @@ export class MessageRenderer {
       // Fallback for old conversations without contentBlocks
       if (msg.content) {
         const textEl = contentEl.createDiv({ cls: 'claudian-text-block' });
+        if (msg.provider === 'codex') {
+          textEl.setAttribute('data-provider', 'codex');
+          textEl.setAttribute('data-stage', 'final');
+        }
         void this.renderContent(textEl, msg.content);
         this.addTextCopyButton(textEl, msg.content);
       }
