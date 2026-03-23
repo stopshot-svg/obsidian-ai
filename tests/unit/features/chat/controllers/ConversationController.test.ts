@@ -55,10 +55,12 @@ function createMockDeps(overrides: Partial<ConversationControllerDeps> = {}): Co
         setSessionId: jest.fn(),
       },
       settings: {
+        provider: 'claude',
         userName: '',
         enableAutoTitleGeneration: true,
         permissionMode: 'yolo',
       },
+      getActiveProviderId: jest.fn(function(this: any) { return this.settings.provider ?? 'claude'; }),
     } as any,
     state,
     renderer: {
@@ -271,6 +273,14 @@ describe('ConversationController', () => {
         expect(deps.state.messages.length).toBe(1);
         const welcomeEl = deps.getWelcomeEl()!;
         expect(welcomeEl.style.display).toBe('none');
+      });
+
+      it('should prefix greeting with provider label', () => {
+        (deps.plugin as any).settings.provider = 'codex';
+
+        const greeting = controller.getGreeting();
+
+        expect(greeting.startsWith('Codex · ')).toBe(true);
       });
     });
   });

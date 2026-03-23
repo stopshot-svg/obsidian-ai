@@ -750,6 +750,12 @@ export class ConversationController {
     const hour = now.getHours();
     const day = now.getDay(); // 0 = Sunday, 6 = Saturday
     const name = this.deps.plugin.settings.userName?.trim();
+    const providerId = typeof this.deps.plugin.getEffectiveProviderId === 'function'
+      ? this.deps.plugin.getEffectiveProviderId()
+      : (typeof this.deps.plugin.getActiveProviderId === 'function'
+        ? this.deps.plugin.getActiveProviderId()
+        : (this.deps.plugin.settings.provider ?? 'claude'));
+    const providerLabel = providerId === 'codex' ? 'Codex' : 'Claudian';
 
     // Helper to optionally personalize a greeting (with fallback for no-name case)
     const personalize = (base: string, noNameFallback?: string): string =>
@@ -797,7 +803,8 @@ export class ConversationController {
       ...generalGreetings,
     ];
 
-    return allGreetings[Math.floor(Math.random() * allGreetings.length)];
+    const greeting = allGreetings[Math.floor(Math.random() * allGreetings.length)];
+    return `${providerLabel} · ${greeting}`;
   }
 
   /** Updates welcome element visibility based on message count. */
