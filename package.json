@@ -1,6 +1,6 @@
 {
   "name": "obsidian-ai",
-  "version": "1.3.78",
+  "version": "1.3.79",
   "description": "Obsidian AI - switchable Claude and Codex agent workspace for Obsidian",
   "main": "main.js",
   "scripts": {

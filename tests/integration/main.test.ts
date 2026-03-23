@@ -129,6 +129,16 @@ describe('ClaudianPlugin', () => {
       expect((plugin.addSettingTab as jest.Mock)).toHaveBeenCalled();
     });
 
+    it('should fall back to a minimal settings tab when full settings registration fails', async () => {
+      (plugin.addSettingTab as jest.Mock)
+        .mockImplementationOnce(() => { throw new Error('settings tab failed'); })
+        .mockImplementation(() => undefined);
+
+      await expect(plugin.onload()).resolves.toBeUndefined();
+
+      expect((plugin.addSettingTab as jest.Mock)).toHaveBeenCalledTimes(2);
+    });
+
     it('should migrate legacy cli path to hostname-based paths and clear old field', async () => {
       const legacyPath = '/legacy/claude';
       mockApp.vault.adapter.exists.mockImplementation(async (path: string) => {

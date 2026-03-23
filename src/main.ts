@@ -5,8 +5,8 @@
  * Manages conversation persistence and environment variable configuration.
  */
 
-import type { Editor, MarkdownView } from 'obsidian';
-import { Notice, Plugin } from 'obsidian';
+import type { App, Editor, MarkdownView } from 'obsidian';
+import { Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 
 import { AgentManager } from './core/agents';
 import { McpServerManager } from './core/mcp';
@@ -181,6 +181,20 @@ function ensureTaskToolCall(
   return taskToolCall;
 }
 
+class FallbackSettingTab extends PluginSettingTab {
+  constructor(app: App, plugin: Plugin) {
+    super(app, plugin);
+  }
+
+  display(): void {
+    const { containerEl } = this;
+    containerEl.empty();
+    new Setting(containerEl)
+      .setName('Obsidian AI')
+      .setDesc('The full settings tab failed to initialize. Please reinstall the latest release or reset local plugin data.');
+  }
+}
+
 /**
  * Main plugin class for Claudian.
  * Handles plugin lifecycle, settings persistence, and conversation management.
@@ -229,24 +243,45 @@ export default class ClaudianPlugin extends Plugin {
     this.codexCliResolver = new CodexCliResolver();
     this.providerManager = new ProviderManager();
 
-    this.registerView(
-      VIEW_TYPE_CLAUDIAN,
-      (leaf) => new ClaudianView(leaf, this)
-    );
+    try {
+      this.registerView(
+        VIEW_TYPE_CLAUDIAN,
+        (leaf) => new ClaudianView(leaf, this)
+      );
+    } catch (error) {
+      this.reportStartupIssue('Failed to register the Obsidian AI view.', error);
+    }
 
-    this.addRibbonIcon('bot', 'Open Obsidian AI', () => {
-      this.activateView();
-    });
-
-    this.addCommand({
-      id: 'open-view',
-      name: 'Open chat view',
-      callback: () => {
+    try {
+      this.addRibbonIcon('bot', 'Open Obsidian AI', () => {
         this.activateView();
-      },
-    });
+      });
+    } catch (error) {
+      this.reportStartupIssue('Failed to register the Obsidian AI ribbon icon.', error);
+    }
 
-    this.addSettingTab(new ClaudianSettingTab(this.app, this));
+    try {
+      this.addCommand({
+        id: 'open-view',
+        name: 'Open chat view',
+        callback: () => {
+          this.activateView();
+        },
+      });
+    } catch (error) {
+      this.reportStartupIssue('Failed to register the open view command.', error);
+    }
+
+    try {
+      this.addSettingTab(new ClaudianSettingTab(this.app, this));
+    } catch (error) {
+      this.reportStartupIssue('Failed to register the full settings tab. Falling back to a minimal settings page.', error);
+      try {
+        this.addSettingTab(new FallbackSettingTab(this.app, this));
+      } catch (fallbackError) {
+        this.reportStartupIssue('Failed to register the fallback settings tab.', fallbackError);
+      }
+    }
 
     try {
       await this.finishStartupInitialization();
