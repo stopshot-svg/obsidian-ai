@@ -1,7 +1,7 @@
 {
   "id": "obsidian-ai",
   "name": "Obsidian AI",
-  "version": "1.3.91",
+  "version": "1.3.92",
   "minAppVersion": "1.4.5",
   "description": "AI workspace for Obsidian with switchable Claude and Codex providers, chat, inline edit, and agentic vault workflows.",
   "author": "stopshot-svg",

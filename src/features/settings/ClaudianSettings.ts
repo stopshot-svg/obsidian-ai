@@ -79,6 +79,28 @@ function isSimplifiedChineseLocale(locale: string | undefined): boolean {
   return locale === 'zh' || locale === 'zh-CN' || locale === 'zh-Hans';
 }
 
+function getCliLookupCommand(toolName: 'claude' | 'codex' | 'gemini'): string {
+  return process.platform === 'win32'
+    ? `Get-Command ${toolName} | Select-Object -ExpandProperty Source`
+    : `command -v ${toolName}`;
+}
+
+function getCliPlaceholder(toolName: 'claude' | 'codex' | 'gemini'): string {
+  if (process.platform === 'win32') {
+    if (toolName === 'claude') return 'C:\\Users\\you\\AppData\\Local\\Claude\\claude.exe';
+    if (toolName === 'codex') return 'C:\\Users\\you\\AppData\\Roaming\\npm\\codex.cmd';
+    return 'C:\\Users\\you\\AppData\\Roaming\\npm\\gemini.cmd';
+  }
+
+  if (process.platform === 'darwin') {
+    if (toolName === 'claude') return '/opt/homebrew/bin/claude';
+    if (toolName === 'codex') return '/opt/homebrew/bin/codex';
+    return '/opt/homebrew/bin/gemini';
+  }
+
+  return `/usr/local/bin/${toolName}`;
+}
+
 export class ClaudianSettingTab extends PluginSettingTab {
   plugin: ClaudianPlugin;
   private contextLimitsContainer: HTMLElement | null = null;
@@ -763,10 +785,10 @@ export class ClaudianSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName(isZhCN ? '运行时' : 'Runtime').setHeading();
     this.createCliPathSetting(containerEl, {
       name: t('settings.cliPath.name'),
-      description: `${t('settings.cliPath.desc')} ${process.platform === 'win32' ? t('settings.cliPath.descWindows') : t('settings.cliPath.descUnix')}`,
-      placeholder: process.platform === 'win32'
-        ? 'D:\\nodejs\\node_global\\node_modules\\@anthropic-ai\\claude-code\\cli.js'
-        : '/usr/local/lib/node_modules/@anthropic-ai/claude-code/cli.js',
+      description: isZhCN
+        ? `可选：填写 Claude CLI 的完整路径。你可以先运行 \`${getCliLookupCommand('claude')}\`，然后把结果粘贴到这里。留空时会尝试从 PATH 自动发现。`
+        : `Optional path for the Claude CLI. Run \`${getCliLookupCommand('claude')}\` and paste the full result here. Leave empty to auto-detect from PATH.`,
+      placeholder: getCliPlaceholder('claude'),
       currentValue: this.plugin.settings.claudeCliPathsByHost?.[getHostnameKey()] || '',
       onSave: async (trimmed) => {
         if (!this.plugin.settings.claudeCliPathsByHost) {
@@ -781,16 +803,10 @@ export class ClaudianSettingTab extends PluginSettingTab {
 
     this.createCliPathSetting(containerEl, {
       name: isZhCN ? `Codex CLI 路径（${getHostnameKey()}）` : `Codex CLI path (${getHostnameKey()})`,
-      description: process.platform === 'win32'
-        ? (isZhCN
-          ? '可选：填写 Codex CLI 的完整路径。你可以先在 PowerShell 里运行 `Get-Command codex | Select-Object -ExpandProperty Source`，然后把结果粘贴到这里。留空时会尝试从 PATH 自动发现 `codex`。'
-          : 'Optional path for the Codex CLI. In PowerShell, run `Get-Command codex | Select-Object -ExpandProperty Source` and paste the full result here. Leave empty to auto-detect `codex` from PATH.')
-        : (isZhCN
-          ? '可选：填写 Codex CLI 的完整路径。你可以先在终端里运行 `which codex`，然后把结果粘贴到这里。留空时会尝试从 PATH 自动发现 `codex`。'
-          : 'Optional path for the Codex CLI. Run `which codex` in your terminal and paste the full result here. Leave empty to auto-detect `codex` from PATH.'),
-      placeholder: process.platform === 'win32'
-        ? 'C:\\Users\\you\\AppData\\Local\\Programs\\codex\\codex.exe'
-        : '/usr/local/bin/codex',
+      description: isZhCN
+        ? `可选：填写 Codex CLI 的完整路径。你可以先运行 \`${getCliLookupCommand('codex')}\`，然后把结果粘贴到这里。留空时会尝试从 PATH 自动发现 \`codex\`。`
+        : `Optional path for the Codex CLI. Run \`${getCliLookupCommand('codex')}\` and paste the full result here. Leave empty to auto-detect \`codex\` from PATH.`,
+      placeholder: getCliPlaceholder('codex'),
       currentValue: this.plugin.settings.codexCliPathsByHost?.[getHostnameKey()] || '',
       onSave: async (trimmed) => {
         if (!this.plugin.settings.codexCliPathsByHost) {
@@ -804,16 +820,10 @@ export class ClaudianSettingTab extends PluginSettingTab {
 
     this.createCliPathSetting(containerEl, {
       name: isZhCN ? `Gemini CLI 路径（${getHostnameKey()}）` : `Gemini CLI path (${getHostnameKey()})`,
-      description: process.platform === 'win32'
-        ? (isZhCN
-          ? '可选：填写 Gemini CLI 的完整路径。你可以先在 PowerShell 里运行 `Get-Command gemini | Select-Object -ExpandProperty Source`，然后把结果粘贴到这里。留空时会尝试从 PATH 自动发现 `gemini`。'
-          : 'Optional path for the Gemini CLI. In PowerShell, run `Get-Command gemini | Select-Object -ExpandProperty Source` and paste the full result here. Leave empty to auto-detect `gemini` from PATH.')
-        : (isZhCN
-          ? '可选：填写 Gemini CLI 的完整路径。你可以先在终端里运行 `which gemini`，然后把结果粘贴到这里。留空时会尝试从 PATH 自动发现 `gemini`。'
-          : 'Optional path for the Gemini CLI. Run `which gemini` in your terminal and paste the full result here. Leave empty to auto-detect `gemini` from PATH.'),
-      placeholder: process.platform === 'win32'
-        ? 'C:\\Users\\you\\AppData\\Roaming\\npm\\gemini.cmd'
-        : '/usr/local/bin/gemini',
+      description: isZhCN
+        ? `可选：填写 Gemini CLI 的完整路径。你可以先运行 \`${getCliLookupCommand('gemini')}\`，然后把结果粘贴到这里。留空时会尝试从 PATH 自动发现 \`gemini\`。`
+        : `Optional path for the Gemini CLI. Run \`${getCliLookupCommand('gemini')}\` and paste the full result here. Leave empty to auto-detect \`gemini\` from PATH.`,
+      placeholder: getCliPlaceholder('gemini'),
       currentValue: this.plugin.settings.geminiCliPathsByHost?.[getHostnameKey()] || '',
       onSave: async (trimmed) => {
         if (!this.plugin.settings.geminiCliPathsByHost) {
