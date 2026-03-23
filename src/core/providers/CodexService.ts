@@ -1,4 +1,7 @@
 import { spawn, type ChildProcessWithoutNullStreams } from 'child_process';
+import * as fs from 'fs/promises';
+import * as os from 'os';
+import * as path from 'path';
 import * as readline from 'readline';
 
 import type { ImageAttachment, ChatMessage, StreamChunk } from '../types';
@@ -66,7 +69,7 @@ export class CodexService extends ClaudianService {
 
   async *query(
     prompt: string,
-    _images?: ImageAttachment[],
+    images?: ImageAttachment[],
     _conversationHistory?: ChatMessage[],
     queryOptions?: QueryOptions
   ): AsyncGenerator<StreamChunk> {
@@ -107,6 +110,16 @@ export class CodexService extends ClaudianService {
     for (const dir of additionalDirectories) {
       if (dir && dir.trim()) {
         commandArgs.push('--add-dir', dir.trim());
+      }
+    }
+
+    const tempImageDir = images && images.length > 0
+      ? await this.materializeImages(images)
+      : null;
+    if (tempImageDir) {
+      const entries = await fs.readdir(tempImageDir);
+      for (const entry of entries) {
+        commandArgs.push('--image', path.join(tempImageDir, entry));
       }
     }
 
@@ -168,6 +181,9 @@ export class CodexService extends ClaudianService {
     } finally {
       rl.close();
       this.runningProcess = null;
+      if (tempImageDir) {
+        await fs.rm(tempImageDir, { recursive: true, force: true }).catch(() => {});
+      }
       if (!child.killed) {
         try {
           child.kill();
@@ -208,6 +224,41 @@ export class CodexService extends ClaudianService {
     }
     env.GIT_TERMINAL_PROMPT = '0';
     return env;
+  }
+
+  private async materializeImages(images: ImageAttachment[]): Promise<string | null> {
+    if (images.length === 0) {
+      return null;
+    }
+
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'claudian-codex-images-'));
+    for (let index = 0; index < images.length; index++) {
+      const image = images[index];
+      const extension = this.getImageExtension(image);
+      const fileName = `${index + 1}-${this.sanitizeFileName(image.name || 'image')}.${extension}`;
+      const filePath = path.join(tempDir, fileName);
+      await fs.writeFile(filePath, Buffer.from(image.data, 'base64'));
+    }
+
+    return tempDir;
+  }
+
+  private getImageExtension(image: ImageAttachment): string {
+    switch (image.mediaType) {
+      case 'image/jpeg':
+        return 'jpg';
+      case 'image/gif':
+        return 'gif';
+      case 'image/webp':
+        return 'webp';
+      case 'image/png':
+      default:
+        return 'png';
+    }
+  }
+
+  private sanitizeFileName(name: string): string {
+    return name.replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '') || 'image';
   }
 
   private parseThreadEvent(line: string): CodexThreadEvent | null {

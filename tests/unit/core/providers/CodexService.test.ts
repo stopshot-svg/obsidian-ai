@@ -185,4 +185,26 @@ describe('CodexService', () => {
     expect(args).toContain('--model');
     expect(args).toContain('gpt-5-codex-setting');
   });
+
+  it('materializes image attachments into temporary files', async () => {
+    const service = createService();
+    const tempDir = await (service as any).materializeImages([
+      {
+        id: 'img-1',
+        name: 'diagram',
+        mediaType: 'image/png',
+        data: Buffer.from('fake-image').toString('base64'),
+        size: 10,
+        source: 'paste',
+      },
+    ]);
+
+    expect(tempDir).toMatch(/claudian-codex-images-/);
+
+    const files = await require('fs/promises').readdir(tempDir);
+    expect(files).toHaveLength(1);
+    expect(files[0]).toMatch(/diagram\.png$/);
+
+    await require('fs/promises').rm(tempDir, { recursive: true, force: true });
+  });
 });
