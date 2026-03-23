@@ -7,6 +7,7 @@ import {
   createTab,
   deactivateTab,
   destroyTab,
+  refreshTabProviderBindings,
   getTabTitle,
   initializeTabControllers,
   initializeTabService,
@@ -331,12 +332,12 @@ function createMockPlugin(overrides: Record<string, any> = {}): any {
         status: providerId === 'codex' ? 'experimental' : 'stable',
         description: '',
         capabilities: {
-          inlineEdit: providerId !== 'codex',
-          instructionRefine: providerId !== 'codex',
+          inlineEdit: true,
+          instructionRefine: true,
           mcp: providerId !== 'codex',
           persistentConversation: true,
           slashCommands: true,
-          titleGeneration: providerId !== 'codex',
+          titleGeneration: true,
         },
       })),
     },
@@ -982,7 +983,7 @@ describe('Tab - UI Initialization', () => {
       expect(tab.services.titleGenerationService).toBeDefined();
     });
 
-    it('should disable instruction refine and title generation services for codex provider', () => {
+    it('should provide instruction refine and title generation services for codex provider', () => {
       const plugin = createMockPlugin({
         settings: {
           ...createMockPlugin().settings,
@@ -993,8 +994,25 @@ describe('Tab - UI Initialization', () => {
 
       initializeTabUI(tab, plugin);
 
-      expect(tab.services.instructionRefineService).toBeNull();
-      expect(tab.services.titleGenerationService).toBeNull();
+      expect(tab.services.instructionRefineService).not.toBeNull();
+      expect(tab.services.titleGenerationService).not.toBeNull();
+    });
+
+    it('should refresh provider-dependent services when switching to codex provider', () => {
+      const plugin = createMockPlugin({
+        settings: {
+          ...createMockPlugin().settings,
+          provider: 'codex',
+        },
+      });
+      const tab = createTab(createMockOptions({ plugin }));
+
+      initializeTabUI(tab, plugin);
+      refreshTabProviderBindings(tab, plugin);
+
+      expect(tab.services.instructionRefineService).not.toBeNull();
+      expect(tab.services.titleGenerationService).not.toBeNull();
+      expect(mockMcpServerSelector.setMcpManager).toHaveBeenCalledWith(null);
     });
 
     it('should create InstructionModeManager', () => {

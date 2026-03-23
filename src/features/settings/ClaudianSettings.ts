@@ -10,7 +10,7 @@ import type ClaudianPlugin from '../../main';
 import { findNodeExecutable, formatContextLimit, getCustomModelIds, getEnhancedPath, getModelsFromEnvironment, parseContextLimit, parseEnvironmentVariables } from '../../utils/env';
 import { expandHomePath } from '../../utils/path';
 import { ClaudianView } from '../chat/ClaudianView';
-import { resetTabService } from '../chat/tabs/Tab';
+import { refreshTabProviderBindings, resetTabService } from '../chat/tabs/Tab';
 import { buildNavMappingText, parseNavMappings } from './keyboardNavigation';
 import { AgentSettings } from './ui/AgentSettings';
 import { EnvSnippetManager } from './ui/EnvSnippetManager';
@@ -814,6 +814,7 @@ export class ClaudianSettingTab extends PluginSettingTab {
 
     for (const tab of tabManager.getAllTabs()) {
       resetTabService(tab);
+      refreshTabProviderBindings(tab, this.plugin);
     }
   }
 

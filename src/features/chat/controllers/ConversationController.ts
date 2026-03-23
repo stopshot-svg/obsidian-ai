@@ -39,6 +39,7 @@ export interface ConversationControllerDeps {
   getAgentService?: () => ClaudianService | null;
   getRuntimeProviderId?: () => ProviderId | null;
   reinitializeAgentService?: () => Promise<void>;
+  refreshProviderBindings?: () => void;
 }
 
 type SaveOptions = {
@@ -297,6 +298,7 @@ export class ConversationController {
       if (currentRuntimeProvider && currentRuntimeProvider !== targetProvider) {
         await this.deps.reinitializeAgentService?.();
       }
+      this.deps.refreshProviderBindings?.();
       const agentService = this.getAgentService();
       if (agentService) {
         const resolvedSessionId = agentService.applyForkState(conversation);

@@ -393,21 +393,6 @@ function initializeSlashCommands(
  */
 function initializeInstructionAndTodo(tab: TabData, plugin: ClaudianPlugin): void {
   const { dom } = tab;
-  const conversationProvider = tab.conversationId
-    ? plugin.getConversationSync(tab.conversationId)?.provider
-    : null;
-  const provider = plugin.providerManager.getDescriptor(conversationProvider ?? plugin.getActiveProviderId());
-
-  tab.services.instructionRefineService = provider.capabilities.instructionRefine
-    ? (provider.id === 'codex'
-      ? new CodexInstructionRefineService(plugin)
-      : new InstructionRefineService(plugin))
-    : null;
-  tab.services.titleGenerationService = provider.capabilities.titleGeneration
-    ? (provider.id === 'codex'
-      ? new CodexTitleGenerationService(plugin)
-      : new TitleGenerationService(plugin))
-    : null;
   tab.ui.instructionModeManager = new InstructionModeManagerClass(
     dom.inputEl,
     {
@@ -448,6 +433,55 @@ function initializeInstructionAndTodo(tab: TabData, plugin: ClaudianPlugin): voi
 
   tab.ui.statusPanel = new StatusPanel();
   tab.ui.statusPanel.mount(dom.statusPanelContainerEl);
+  refreshTabProviderBindings(tab, plugin);
+}
+
+export function refreshTabProviderBindings(tab: TabData, plugin: ClaudianPlugin): void {
+  const conversationProvider = tab.conversationId
+    ? plugin.getConversationSync(tab.conversationId)?.provider
+    : null;
+  const provider = plugin.providerManager.getDescriptor(
+    tab.serviceProviderId ?? conversationProvider ?? plugin.getActiveProviderId()
+  );
+
+  tab.services.instructionRefineService?.cancel();
+  tab.services.titleGenerationService?.cancel();
+
+  tab.services.instructionRefineService = provider.capabilities.instructionRefine
+    ? (provider.id === 'codex'
+      ? new CodexInstructionRefineService(plugin)
+      : new InstructionRefineService(plugin))
+    : null;
+  tab.services.titleGenerationService = provider.capabilities.titleGeneration
+    ? (provider.id === 'codex'
+      ? new CodexTitleGenerationService(plugin)
+      : new TitleGenerationService(plugin))
+    : null;
+
+  tab.ui.mcpServerSelector?.setMcpManager(
+    provider.capabilities.mcp ? plugin.mcpManager : null
+  );
+  if (
+    !provider.capabilities.mcp &&
+    tab.ui.mcpServerSelector &&
+    'clearEnabled' in tab.ui.mcpServerSelector &&
+    typeof tab.ui.mcpServerSelector.clearEnabled === 'function'
+  ) {
+    tab.ui.mcpServerSelector.clearEnabled();
+  }
+
+  tab.ui.fileContextManager?.setOnMcpMentionChange((servers) => {
+    if (!provider.capabilities.mcp) return;
+    tab.ui.mcpServerSelector?.addMentionedServers(servers);
+  });
+
+  tab.ui.modelSelector?.updateDisplay();
+  tab.ui.modelSelector?.renderOptions();
+  tab.ui.thinkingBudgetSelector?.updateDisplay();
+  if (tab.ui.permissionToggle && 'updateDisplay' in tab.ui.permissionToggle && typeof tab.ui.permissionToggle.updateDisplay === 'function') {
+    tab.ui.permissionToggle.updateDisplay();
+  }
+  tab.ui.contextUsageMeter?.update(tab.state.usage);
 }
 
 /**
@@ -538,16 +572,7 @@ function initializeInputToolbar(tab: TabData, plugin: ClaudianPlugin): void {
   tab.ui.mcpServerSelector = toolbarComponents.mcpServerSelector;
   tab.ui.permissionToggle = toolbarComponents.permissionToggle;
 
-  const providerDescriptor = plugin.providerManager.getDescriptor(resolveTabProviderId());
-  tab.ui.mcpServerSelector.setMcpManager(
-    providerDescriptor.capabilities.mcp ? plugin.mcpManager : null
-  );
-
-  // Sync @-mentions to UI selector
-  tab.ui.fileContextManager?.setOnMcpMentionChange((servers) => {
-    if (!providerDescriptor.capabilities.mcp) return;
-    tab.ui.mcpServerSelector?.addMentionedServers(servers);
-  });
+  refreshTabProviderBindings(tab, plugin);
 
   // Wire external context changes
   tab.ui.externalContextSelector.setOnChange(() => {
@@ -884,6 +909,7 @@ export function initializeTabControllers(
         resetTabService(tab);
         await initializeTabService(tab, plugin, mcpManager);
       },
+      refreshProviderBindings: () => refreshTabProviderBindings(tab, plugin),
     },
     {}
   );
