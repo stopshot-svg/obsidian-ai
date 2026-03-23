@@ -237,7 +237,14 @@ export class ThinkingBudgetSelector {
   }
 
   updateDisplay() {
-    const model = this.callbacks.getSettings().model;
+    const settings = this.callbacks.getSettings();
+    if (settings.provider === 'codex') {
+      this.container.style.display = 'none';
+      return;
+    }
+
+    this.container.style.display = '';
+    const model = settings.model;
     const adaptive = isAdaptiveThinkingModel(model);
 
     if (this.effortEl) {

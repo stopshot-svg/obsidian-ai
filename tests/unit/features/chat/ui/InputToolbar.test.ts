@@ -34,6 +34,8 @@ function createMockCallbacks(overrides: Record<string, any> = {}) {
     onEffortLevelChange: jest.fn().mockResolvedValue(undefined),
     onPermissionModeChange: jest.fn().mockResolvedValue(undefined),
     getSettings: jest.fn().mockReturnValue({
+      provider: 'claude',
+      codexModel: '',
       model: 'sonnet',
       thinkingBudget: 'low',
       effortLevel: 'high',
@@ -223,6 +225,8 @@ describe('ThinkingBudgetSelector', () => {
       parentEl = createMockEl();
       callbacks = createMockCallbacks({
         getSettings: jest.fn().mockReturnValue({
+          provider: 'claude',
+          codexModel: '',
           model: 'custom-model',
           thinkingBudget: 'low',
           effortLevel: 'high',
@@ -251,6 +255,8 @@ describe('ThinkingBudgetSelector', () => {
 
     it('should display Off when budget is off', () => {
       callbacks.getSettings.mockReturnValue({
+        provider: 'claude',
+        codexModel: '',
         model: 'custom-model',
         thinkingBudget: 'off',
         permissionMode: 'normal',
@@ -300,6 +306,23 @@ describe('ThinkingBudgetSelector', () => {
       const gears = options?.children || [];
       const offGear = gears.find((g: any) => g.textContent === 'Off');
       expect(offGear?.getAttribute('title')).toBe('Disabled');
+    });
+
+    it('should hide selector for codex provider', () => {
+      callbacks.getSettings.mockReturnValue({
+        provider: 'codex',
+        codexModel: 'gpt-5-codex',
+        model: 'sonnet',
+        thinkingBudget: 'low',
+        effortLevel: 'high',
+        permissionMode: 'normal',
+        enableOpus1M: false,
+        enableSonnet1M: false,
+      });
+      selector.updateDisplay();
+
+      const container = parentEl.querySelector('.claudian-thinking-selector');
+      expect(container?.style.display).toBe('none');
     });
   });
 });
