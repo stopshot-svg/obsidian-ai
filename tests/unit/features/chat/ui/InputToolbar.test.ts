@@ -608,6 +608,12 @@ describe('ContextUsageMeter', () => {
     expect(percent?.textContent).toBe('25%');
   });
 
+  it('should hide meter when context window is unavailable', () => {
+    meter.update(makeUsage({ contextTokens: 50000, contextWindow: 0, percentage: 25 }));
+    const container = parentEl.querySelector('.claudian-context-meter');
+    expect(container?.style.display).toBe('none');
+  });
+
   it('should add warning class when usage > 80%', () => {
     meter.update(makeUsage({ contextTokens: 170000, contextWindow: 200000, percentage: 85 }));
     const container = parentEl.querySelector('.claudian-context-meter');
