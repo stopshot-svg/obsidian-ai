@@ -1,7 +1,7 @@
 import { Notice, setIcon } from 'obsidian';
 
 import type { ClaudianService } from '../../../core/agent';
-import type { Conversation } from '../../../core/types';
+import type { Conversation, ProviderId } from '../../../core/types';
 import { t } from '../../../i18n';
 import type ClaudianPlugin from '../../../main';
 import { confirm } from '../../../shared/modals/ConfirmModal';
@@ -37,6 +37,8 @@ export interface ConversationControllerDeps {
   getTitleGenerationService: () => TitleGenerationService | null;
   getStatusPanel: () => StatusPanel | null;
   getAgentService?: () => ClaudianService | null;
+  getRuntimeProviderId?: () => ProviderId | null;
+  reinitializeAgentService?: () => Promise<void>;
 }
 
 type SaveOptions = {
@@ -290,6 +292,11 @@ export class ConversationController {
         : plugin.settings.persistentExternalContextPaths || [];
 
       // Update agent service session ID with correct external contexts
+      const targetProvider = conversation.provider ?? 'claude';
+      const currentRuntimeProvider = this.deps.getRuntimeProviderId?.() ?? null;
+      if (currentRuntimeProvider && currentRuntimeProvider !== targetProvider) {
+        await this.deps.reinitializeAgentService?.();
+      }
       const agentService = this.getAgentService();
       if (agentService) {
         const resolvedSessionId = agentService.applyForkState(conversation);

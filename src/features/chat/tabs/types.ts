@@ -1,6 +1,7 @@
 import type { Component, WorkspaceLeaf } from 'obsidian';
 
 import type { ClaudianService } from '../../../core/agent';
+import type { ProviderId } from '../../../core/types';
 import type { SlashCommandDropdown } from '../../../shared/components/SlashCommandDropdown';
 import type {
   BrowserSelectionController,
@@ -181,6 +182,9 @@ export interface TabData {
 
   /** Per-tab ClaudianService instance for independent streaming. */
   service: ClaudianService | null;
+
+  /** Provider used by the current runtime instance. */
+  serviceProviderId: ProviderId | null;
 
   /** Whether the service has been initialized (lazy start). */
   serviceInitialized: boolean;

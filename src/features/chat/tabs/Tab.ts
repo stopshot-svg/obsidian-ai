@@ -97,6 +97,7 @@ export function createTab(options: TabCreateOptions): TabData {
     id,
     conversationId: conversation?.id ?? null,
     service: null,
+    serviceProviderId: null,
     serviceInitialized: false,
     state,
     controllers: {
@@ -267,6 +268,7 @@ export async function initializeTabService(
     }
 
     service = createRuntimeService(plugin, mcpManager, providerId);
+    tab.serviceProviderId = providerId;
     unsubscribeReadyState = service.onReadyStateChange((ready) => {
       tab.ui.modelSelector?.setReady(ready);
     });
@@ -308,6 +310,7 @@ export function resetTabService(tab: TabData): void {
   tab.service?.setAutoTurnCallback?.(null);
   tab.service?.closePersistentQuery('tab runtime reset');
   tab.service = null;
+  tab.serviceProviderId = null;
   tab.serviceInitialized = false;
   tab.ui.modelSelector?.setReady(false);
 }
@@ -839,6 +842,11 @@ export function initializeTabControllers(
       getTitleGenerationService: () => services.titleGenerationService,
       getStatusPanel: () => ui.statusPanel,
       getAgentService: () => tab.service, // Use tab's service instead of plugin's
+      getRuntimeProviderId: () => tab.serviceProviderId,
+      reinitializeAgentService: async () => {
+        resetTabService(tab);
+        await initializeTabService(tab, plugin, mcpManager);
+      },
     },
     {}
   );
@@ -1128,6 +1136,7 @@ export async function destroyTab(tab: TabData): Promise<void> {
   tab.service?.setAutoTurnCallback?.(null);
   tab.service?.closePersistentQuery('tab closed');
   tab.service = null;
+  tab.serviceProviderId = null;
   tab.serviceInitialized = false;
 
   // Remove DOM element
