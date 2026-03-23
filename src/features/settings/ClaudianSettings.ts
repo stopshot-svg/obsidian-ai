@@ -134,6 +134,7 @@ export class ClaudianSettingTab extends PluginSettingTab {
             this.plugin.settings.provider = value as typeof this.plugin.settings.provider;
             await this.plugin.saveSettings();
             await this.cleanupAllTabs();
+            this.plugin.getView()?.refreshProviderBadge();
             this.display();
           });
       });

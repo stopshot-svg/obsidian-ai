@@ -23,6 +23,7 @@ export class ClaudianView extends ItemView {
   private titleSlotEl: HTMLElement | null = null;
   private logoEl: HTMLElement | null = null;
   private titleTextEl: HTMLElement | null = null;
+  private providerBadgeEl: HTMLElement | null = null;
   private headerActionsEl: HTMLElement | null = null;
   private headerActionsContent: HTMLElement | null = null;
 
@@ -91,6 +92,17 @@ export class ClaudianView extends ItemView {
       tab.ui.modelSelector?.updateDisplay();
       tab.ui.modelSelector?.renderOptions();
     }
+  }
+
+  refreshProviderBadge(): void {
+    if (!this.providerBadgeEl) {
+      return;
+    }
+
+    const provider = this.plugin.providerManager.getActiveDescriptor(this.plugin.settings);
+    const suffix = provider.status === 'experimental' ? ' · Experimental' : '';
+    this.providerBadgeEl.setText(`${provider.label}${suffix}`);
+    this.providerBadgeEl.setAttribute('aria-label', `Current provider: ${provider.label}`);
   }
 
   /** Updates hidden slash commands on all tabs (used after settings change). */
@@ -226,6 +238,8 @@ export class ClaudianView extends ItemView {
 
     // Title text (hidden in header mode when 2+ tabs)
     this.titleTextEl = this.titleSlotEl.createEl('h4', { text: 'Claudian', cls: 'claudian-title-text' });
+    this.providerBadgeEl = this.titleSlotEl.createSpan({ cls: 'claudian-provider-badge' });
+    this.refreshProviderBadge();
 
     // Header actions container (for header mode - initially hidden)
     this.headerActionsEl = header.createDiv({ cls: 'claudian-header-actions claudian-header-actions-slot' });
