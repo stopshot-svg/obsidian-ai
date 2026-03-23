@@ -10,6 +10,7 @@ import type ClaudianPlugin from '../../main';
 import { findNodeExecutable, formatContextLimit, getCustomModelIds, getEnhancedPath, getModelsFromEnvironment, parseContextLimit, parseEnvironmentVariables } from '../../utils/env';
 import { expandHomePath } from '../../utils/path';
 import { ClaudianView } from '../chat/ClaudianView';
+import { resetTabService } from '../chat/tabs/Tab';
 import { buildNavMappingText, parseNavMappings } from './keyboardNavigation';
 import { AgentSettings } from './ui/AgentSettings';
 import { EnvSnippetManager } from './ui/EnvSnippetManager';
@@ -132,6 +133,7 @@ export class ClaudianSettingTab extends PluginSettingTab {
           .onChange(async (value) => {
             this.plugin.settings.provider = value as typeof this.plugin.settings.provider;
             await this.plugin.saveSettings();
+            await this.cleanupAllTabs();
             this.display();
           });
       });
@@ -784,9 +786,12 @@ export class ClaudianSettingTab extends PluginSettingTab {
 
   private async cleanupAllTabs(): Promise<void> {
     const view = this.plugin.getView();
-    await view?.getTabManager()?.broadcastToAllTabs(
-      (service) => Promise.resolve(service.cleanup())
-    );
+    const tabManager = view?.getTabManager();
+    if (!tabManager) return;
+
+    for (const tab of tabManager.getAllTabs()) {
+      resetTabService(tab);
+    }
   }
 
   private renderContextLimitsSection(): void {

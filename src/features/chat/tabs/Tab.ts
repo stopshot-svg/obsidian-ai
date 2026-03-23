@@ -300,6 +300,17 @@ export async function initializeTabService(
 }
 
 /**
+ * Resets the tab runtime so it can be lazily re-created with updated provider or CLI settings.
+ */
+export function resetTabService(tab: TabData): void {
+  tab.service?.setAutoTurnCallback?.(null);
+  tab.service?.closePersistentQuery('tab runtime reset');
+  tab.service = null;
+  tab.serviceInitialized = false;
+  tab.ui.modelSelector?.setReady(false);
+}
+
+/**
  * Initializes file and image context managers for a tab.
  */
 function initializeContextManagers(tab: TabData, plugin: ClaudianPlugin): void {
@@ -1115,6 +1126,7 @@ export async function destroyTab(tab: TabData): Promise<void> {
   tab.service?.setAutoTurnCallback?.(null);
   tab.service?.closePersistentQuery('tab closed');
   tab.service = null;
+  tab.serviceInitialized = false;
 
   // Remove DOM element
   tab.dom.contentEl.remove();
