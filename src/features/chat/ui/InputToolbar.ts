@@ -3,7 +3,6 @@ import * as path from 'path';
 
 import type { McpServerManager } from '../../../core/mcp';
 import type {
-  ClaudeModel,
   ClaudianMcpServer,
   EffortLevel,
   PermissionMode,

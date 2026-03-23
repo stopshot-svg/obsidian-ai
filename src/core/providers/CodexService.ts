@@ -1,16 +1,16 @@
-import { spawn, type ChildProcessWithoutNullStreams } from 'child_process';
+import { type ChildProcessWithoutNullStreams,spawn } from 'child_process';
 import * as fs from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
 import * as readline from 'readline';
 
-import type { ImageAttachment, ChatMessage, StreamChunk } from '../types';
 import type ClaudianPlugin from '../../main';
-import type { McpServerManager } from '../mcp';
-import { ClaudianService, type QueryOptions } from '../agent';
-import { TOOL_BASH } from '../tools/toolNames';
 import { parseEnvironmentVariables } from '../../utils/env';
 import { getVaultPath } from '../../utils/path';
+import { ClaudianService, type QueryOptions } from '../agent';
+import type { McpServerManager } from '../mcp';
+import { TOOL_BASH } from '../tools/toolNames';
+import type { ChatMessage, ImageAttachment, StreamChunk } from '../types';
 
 type CodexThreadEvent =
   | { type: 'thread.started'; thread_id: string }

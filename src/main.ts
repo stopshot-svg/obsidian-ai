@@ -10,8 +10,8 @@ import { Notice, Plugin } from 'obsidian';
 
 import { AgentManager } from './core/agents';
 import { McpServerManager } from './core/mcp';
-import { ProviderManager } from './core/providers';
 import { PluginManager } from './core/plugins';
+import { ProviderManager } from './core/providers';
 import { StorageService } from './core/storage';
 import { isSubagentToolName, TOOL_TASK } from './core/tools/toolNames';
 import type {

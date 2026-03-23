@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events';
+import * as fs from 'fs/promises';
 import { PassThrough } from 'stream';
 
 import { CodexService } from '@/core/providers/CodexService';
@@ -183,8 +184,8 @@ describe('CodexService', () => {
       child.emit('exit', 0, null);
     });
 
-    for await (const _chunk of service.query('hello')) {
-      // drain
+    for await (const chunk of service.query('hello')) {
+      expect(chunk).toBeDefined();
     }
 
     const args = spawn.mock.calls[0][1] as string[];
@@ -207,8 +208,8 @@ describe('CodexService', () => {
       child.emit('exit', 0, null);
     });
 
-    for await (const _chunk of service.query('hello')) {
-      // drain
+    for await (const chunk of service.query('hello')) {
+      expect(chunk).toBeDefined();
     }
 
     const args = spawn.mock.calls[0][1] as string[];
@@ -231,10 +232,10 @@ describe('CodexService', () => {
 
     expect(tempDir).toMatch(/claudian-codex-images-/);
 
-    const files = await require('fs/promises').readdir(tempDir);
+    const files = await fs.readdir(tempDir);
     expect(files).toHaveLength(1);
     expect(files[0]).toMatch(/diagram\.png$/);
 
-    await require('fs/promises').rm(tempDir, { recursive: true, force: true });
+    await fs.rm(tempDir, { recursive: true, force: true });
   });
 });

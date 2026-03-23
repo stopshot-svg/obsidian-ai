@@ -1,10 +1,10 @@
-import { spawn, type ChildProcessWithoutNullStreams } from 'child_process';
+import { type ChildProcessWithoutNullStreams,spawn } from 'child_process';
 import * as readline from 'readline';
 
 import type ClaudianPlugin from '../../../main';
 import { parseEnvironmentVariables } from '../../../utils/env';
 import { getVaultPath } from '../../../utils/path';
-import type { TitleGenerationCallback, TitleGenerationResult } from './TitleGenerationService';
+import type { TitleGenerationCallback } from './TitleGenerationService';
 
 type CodexTitleEvent =
   | { type: 'item.completed'; item?: { type?: string; text?: string } }
@@ -45,7 +45,7 @@ export class CodexTitleGenerationService {
       }
     }
 
-    const prompt = `Generate a concise 2-5 word conversation title.\nReturn only the title, no quotes or explanation.\n\nUser request:\n\"\"\"\n${this.truncateText(userMessage, 500)}\n\"\"\"`;
+    const prompt = `Generate a concise 2-5 word conversation title.\nReturn only the title, no quotes or explanation.\n\nUser request:\n"""\n${this.truncateText(userMessage, 500)}\n"""`;
     const commandArgs = [
       'exec',
       '--experimental-json',

@@ -13,11 +13,9 @@ import type {
   StreamController,
 } from '../controllers';
 import type { MessageRenderer } from '../rendering';
-import type { CodexInstructionRefineService } from '../services/CodexInstructionRefineService';
-import type { InstructionRefineService, InstructionRefineServiceLike } from '../services/InstructionRefineService';
+import type { InstructionRefineServiceLike } from '../services/InstructionRefineService';
 import type { SubagentManager } from '../services/SubagentManager';
-import type { CodexTitleGenerationService } from '../services/CodexTitleGenerationService';
-import type { TitleGenerationService, TitleGenerationServiceLike } from '../services/TitleGenerationService';
+import type { TitleGenerationServiceLike } from '../services/TitleGenerationService';
 import type { ChatState } from '../state';
 import type {
   BangBashModeManager,
