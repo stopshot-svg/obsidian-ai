@@ -512,7 +512,6 @@ function initializeInputToolbar(tab: TabData, plugin: ClaudianPlugin): void {
       model: plugin.settings.model,
       provider: resolveTabProviderId(),
       codexModel: plugin.settings.codexModel,
-      geminiModel: plugin.settings.geminiModel,
       thinkingBudget: plugin.settings.thinkingBudget,
       effortLevel: plugin.settings.effortLevel,
       permissionMode: plugin.settings.permissionMode,
@@ -523,13 +522,6 @@ function initializeInputToolbar(tab: TabData, plugin: ClaudianPlugin): void {
     onModelChange: async (model: string) => {
       if (resolveTabProviderId() === 'codex') {
         plugin.settings.codexModel = model === '__codex_default__' ? '' : model;
-        await plugin.saveSettings();
-        tab.ui.modelSelector?.updateDisplay();
-        tab.ui.modelSelector?.renderOptions();
-        return;
-      }
-      if (resolveTabProviderId() === 'gemini') {
-        plugin.settings.geminiModel = model === '__gemini_default__' ? '' : model;
         await plugin.saveSettings();
         tab.ui.modelSelector?.updateDisplay();
         tab.ui.modelSelector?.renderOptions();

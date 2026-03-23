@@ -474,7 +474,7 @@ export class ConversationController {
     const conversation = await plugin.getConversationById(state.currentConversationId!);
     const conversationProvider = conversation?.provider ?? plugin.getEffectiveProviderId?.() ?? plugin.getActiveProviderId?.() ?? plugin.settings.provider ?? 'claude';
     const wasNative = conversation?.isNative ?? false;
-    const shouldPromote = conversationProvider === 'claude' && !wasNative && !!sessionId;
+    const shouldPromote = conversationProvider !== 'codex' && !wasNative && !!sessionId;
     const isNative = wasNative || shouldPromote;
     const legacyMessages = conversation?.messages ?? [];
     const legacyCutoffAt = shouldPromote
@@ -509,13 +509,13 @@ export class ConversationController {
     const updates: Partial<Conversation> = {
       messages: isNative ? state.messages : state.getPersistedMessages(),
       sessionId: resolvedSessionId,
-      sdkSessionId: (conversationProvider === 'claude' && isNative && sessionId && !isForkSourceOnly)
+      sdkSessionId: (conversationProvider !== 'codex' && isNative && sessionId && !isForkSourceOnly)
         ? sessionId
-        : (conversationProvider === 'claude' ? conversation?.sdkSessionId : undefined),
-      previousSdkSessionIds: conversationProvider === 'claude' ? previousSdkSessionIds : undefined,
+        : (conversationProvider !== 'codex' ? conversation?.sdkSessionId : undefined),
+      previousSdkSessionIds: conversationProvider !== 'codex' ? previousSdkSessionIds : undefined,
       isNative: isNative || undefined,
       legacyCutoffAt,
-      sdkMessagesLoaded: (conversationProvider === 'claude' && isNative) ? true : undefined,
+      sdkMessagesLoaded: (conversationProvider !== 'codex' && isNative) ? true : undefined,
       currentNote: currentNote,
       externalContextPaths: externalContextPaths.length > 0 ? externalContextPaths : undefined,
       usage: state.usage ?? undefined,
@@ -638,11 +638,7 @@ export class ConversationController {
       const content = item.createDiv({ cls: 'claudian-history-item-content' });
       const titleEl = content.createDiv({ cls: 'claudian-history-item-title', text: conv.title });
       titleEl.setAttribute('title', conv.title);
-      const providerLabel = (conv.provider ?? 'claude') === 'codex'
-        ? 'Codex'
-        : (conv.provider ?? 'claude') === 'gemini'
-          ? 'Gemini'
-          : 'Claude';
+      const providerLabel = (conv.provider ?? 'claude') === 'codex' ? 'Codex' : 'Claude';
       const providerEl = content.createDiv({
         cls: 'claudian-history-item-provider',
         text: providerLabel,
@@ -764,11 +760,7 @@ export class ConversationController {
       : (typeof this.deps.plugin.getActiveProviderId === 'function'
         ? this.deps.plugin.getActiveProviderId()
         : (this.deps.plugin.settings.provider ?? 'claude'));
-    const providerLabel = providerId === 'codex'
-      ? 'Codex'
-      : providerId === 'gemini'
-        ? 'Gemini'
-        : 'Obsidian AI';
+    const providerLabel = providerId === 'codex' ? 'Codex' : 'Obsidian AI';
 
     // Helper to optionally personalize a greeting (with fallback for no-name case)
     const personalize = (base: string, noNameFallback?: string): string =>

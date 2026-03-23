@@ -26,7 +26,6 @@ export interface ToolbarSettings {
   model: string;
   provider: ProviderId;
   codexModel: string;
-  geminiModel: string;
   thinkingBudget: ThinkingBudget;
   effortLevel: EffortLevel;
   permissionMode: PermissionMode;
@@ -58,8 +57,7 @@ export class ModelSelector {
 
   private getAvailableModels() {
     const settings = this.callbacks.getSettings();
-    const provider = settings.provider ?? 'claude';
-    if (provider === 'codex') {
+    if (settings.provider === 'codex') {
       const codexModel = settings.codexModel.trim();
       const codexModels = [
         { value: '__codex_default__', label: 'Managed by Codex CLI', description: 'Use the model configured in your local Codex environment.' },
@@ -78,25 +76,6 @@ export class ModelSelector {
       }
 
       return codexModels;
-    }
-    if (provider === 'gemini') {
-      const geminiModel = settings.geminiModel?.trim() || '';
-      const geminiModels = [
-        { value: '__gemini_default__', label: 'Managed by Gemini CLI', description: 'Use the model configured in your local Gemini CLI environment.' },
-        { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', description: 'Higher-quality Gemini model for deeper reasoning.' },
-        { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', description: 'Fast general-purpose Gemini model.' },
-        { value: 'gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash Lite', description: 'Lower-cost Gemini model for quick tasks.' },
-      ];
-
-      if (geminiModel && !geminiModels.some((model) => model.value === geminiModel)) {
-        geminiModels.unshift({
-          value: geminiModel,
-          label: geminiModel,
-          description: 'Current Gemini model from plugin settings.',
-        });
-      }
-
-      return geminiModels;
     }
 
     const models = [...DEFAULT_CLAUDE_MODELS];
@@ -127,11 +106,8 @@ export class ModelSelector {
   updateDisplay() {
     if (!this.buttonEl) return;
     const settings = this.callbacks.getSettings();
-    const provider = settings.provider ?? 'claude';
-    const currentModel = provider === 'codex'
+    const currentModel = settings.provider === 'codex'
       ? (settings.codexModel.trim() || '__codex_default__')
-      : provider === 'gemini'
-        ? (settings.geminiModel.trim() || '__gemini_default__')
       : settings.model;
     const models = this.getAvailableModels();
     const modelInfo = models.find(m => m.value === currentModel);
@@ -154,11 +130,8 @@ export class ModelSelector {
     this.dropdownEl.empty();
 
     const settings = this.callbacks.getSettings();
-    const provider = settings.provider ?? 'claude';
-    const currentModel = provider === 'codex'
+    const currentModel = settings.provider === 'codex'
       ? (settings.codexModel.trim() || '__codex_default__')
-      : provider === 'gemini'
-        ? (settings.geminiModel.trim() || '__gemini_default__')
       : settings.model;
     const models = this.getAvailableModels();
 
@@ -274,8 +247,7 @@ export class ThinkingBudgetSelector {
 
   updateDisplay() {
     const settings = this.callbacks.getSettings();
-    const provider = settings.provider ?? 'claude';
-    if (provider !== 'claude') {
+    if (settings.provider === 'codex') {
       this.container.style.display = 'none';
       return;
     }
@@ -327,8 +299,7 @@ export class PermissionToggle {
 
     const settings = this.callbacks.getSettings();
     const mode = settings.permissionMode;
-    const provider = settings.provider ?? 'claude';
-    const isCliProvider = provider === 'codex' || provider === 'gemini';
+    const isCodex = settings.provider === 'codex';
 
     if (mode === 'plan') {
       this.toggleEl.style.display = 'none';
@@ -339,10 +310,10 @@ export class PermissionToggle {
       this.labelEl.removeClass('plan-active');
       if (mode === 'yolo') {
         this.toggleEl.addClass('active');
-        this.labelEl.setText(isCliProvider ? 'Auto' : 'YOLO');
+        this.labelEl.setText(isCodex ? 'Auto' : 'YOLO');
       } else {
         this.toggleEl.removeClass('active');
-        this.labelEl.setText(isCliProvider ? 'Ask' : 'Safe');
+        this.labelEl.setText(isCodex ? 'Ask' : 'Safe');
       }
     }
   }

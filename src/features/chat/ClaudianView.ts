@@ -3,7 +3,7 @@ import { ItemView, Notice, Scope, setIcon } from 'obsidian';
 
 import { getContextWindowSize, VIEW_TYPE_CLAUDIAN } from '../../core/types';
 import type ClaudianPlugin from '../../main';
-import { GEMINI_LOGO_SVG, LOGO_SVG, OPENAI_LOGO_SVG } from './constants';
+import { LOGO_SVG, OPENAI_LOGO_SVG } from './constants';
 import { TabBar, TabManager, updatePlanModeUI } from './tabs';
 import type { TabData, TabId } from './tabs/types';
 
@@ -114,16 +114,12 @@ export class ClaudianView extends ItemView {
     this.refreshProviderLogo(providerId);
   }
 
-  private refreshProviderLogo(providerId: 'claude' | 'codex' | 'gemini'): void {
+  private refreshProviderLogo(providerId: 'claude' | 'codex'): void {
     if (!this.logoEl) {
       return;
     }
 
-    const logo = providerId === 'codex'
-      ? OPENAI_LOGO_SVG
-      : providerId === 'gemini'
-        ? GEMINI_LOGO_SVG
-        : LOGO_SVG;
+    const logo = providerId === 'codex' ? OPENAI_LOGO_SVG : LOGO_SVG;
     this.logoEl.empty();
 
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');

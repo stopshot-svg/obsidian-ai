@@ -14,14 +14,6 @@ export const OPENAI_LOGO_SVG = {
   fill: '#111111',
 } as const;
 
-export const GEMINI_LOGO_SVG = {
-  viewBox: '0 0 24 24',
-  width: '18',
-  height: '18',
-  path: 'M12 1.5c.53 4.32 1.67 6.64 3.44 8.41S19.53 12.85 24 13.5c-4.47.65-6.79 1.79-8.56 3.56S12.53 20.18 12 24c-.53-3.82-1.67-6.14-3.44-7.91S4.47 14.15 0 13.5c4.47-.65 6.79-1.79 8.56-3.56S11.47 5.82 12 1.5Z',
-  fill: '#4285F4',
-} as const;
-
 /** Random flavor words shown when response completes (e.g., "Baked for 1:23"). */
 export const COMPLETION_FLAVOR_WORDS = [
   'Baked',

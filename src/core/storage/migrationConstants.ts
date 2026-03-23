@@ -27,7 +27,6 @@ export const CLAUDIAN_ONLY_FIELDS = new Set([
   // Model & thinking
   'model',
   'codexModel',
-  'geminiModel',
   'thinkingBudget',
   'effortLevel',
   'enableAutoTitleGeneration',
@@ -50,10 +49,8 @@ export const CLAUDIAN_ONLY_FIELDS = new Set([
   // CLI paths
   'claudeCliPath',
   'codexCliPath',
-  'geminiCliPath',
   'claudeCliPaths',
   'codexCliPaths',
-  'geminiCliPaths',
   'loadUserClaudeSettings',
 
   // Deprecated fields (removed completely, not migrated)
@@ -76,7 +73,6 @@ export const MIGRATABLE_CLAUDIAN_FIELDS = new Set([
   'lastNonPlanPermissionMode',
   'model',
   'codexModel',
-  'geminiModel',
   'thinkingBudget',
   'effortLevel',
   'enableAutoTitleGeneration',
@@ -92,10 +88,8 @@ export const MIGRATABLE_CLAUDIAN_FIELDS = new Set([
   'keyboardNavigation',
   'claudeCliPath',
   'codexCliPath',
-  'geminiCliPath',
   'claudeCliPaths',
   'codexCliPaths',
-  'geminiCliPaths',
   'loadUserClaudeSettings',
 ]);
 
