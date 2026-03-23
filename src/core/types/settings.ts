@@ -251,6 +251,7 @@ export interface ClaudianSettings {
 
   // Model & thinking (Claudian uses enum, CC uses full model ID string)
   model: ClaudeModel;
+  codexModel: string;  // Model ID used by Codex provider (empty = CLI default)
   thinkingBudget: ThinkingBudget;  // Legacy token budget for custom models
   effortLevel: EffortLevel;  // Effort level for adaptive thinking models
   enableAutoTitleGeneration: boolean;
@@ -325,6 +326,7 @@ export const DEFAULT_SETTINGS: ClaudianSettings = {
 
   // Model & thinking
   model: 'haiku',
+  codexModel: '',
   thinkingBudget: 'off',
   effortLevel: 'high',
   enableAutoTitleGeneration: true,

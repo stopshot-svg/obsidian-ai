@@ -26,6 +26,7 @@ export const CLAUDIAN_ONLY_FIELDS = new Set([
 
   // Model & thinking
   'model',
+  'codexModel',
   'thinkingBudget',
   'effortLevel',
   'enableAutoTitleGeneration',
@@ -71,6 +72,7 @@ export const MIGRATABLE_CLAUDIAN_FIELDS = new Set([
   'permissionMode',
   'lastNonPlanPermissionMode',
   'model',
+  'codexModel',
   'thinkingBudget',
   'effortLevel',
   'enableAutoTitleGeneration',

@@ -31,6 +31,7 @@ describe('CodexService', () => {
       },
       settings: {
         model: 'haiku',
+        codexModel: '',
       },
       getResolvedCodexCliPath: jest.fn().mockReturnValue('/usr/local/bin/codex'),
       getActiveEnvironmentVariables: jest.fn().mockReturnValue(''),
@@ -159,5 +160,29 @@ describe('CodexService', () => {
     expect(args).toContain('--add-dir');
     expect(args).toContain('/tmp/project-a');
     expect(args).toContain('/tmp/project-b');
+  });
+
+  it('falls back to codexModel setting when queryOptions.model is absent', async () => {
+    const { spawn } = jest.requireMock('child_process') as { spawn: jest.Mock };
+    const child = new FakeChildProcess();
+    spawn.mockReturnValue(child);
+
+    const service = createService();
+    (service as any).codexPlugin.settings.codexModel = 'gpt-5-codex-setting';
+
+    setImmediate(() => {
+      child.stdout.write(JSON.stringify({ type: 'turn.completed', usage: {} }) + '\n');
+      child.stdout.end();
+      child.stderr.end();
+      child.emit('exit', 0, null);
+    });
+
+    for await (const _chunk of service.query('hello')) {
+      // drain
+    }
+
+    const args = spawn.mock.calls[0][1] as string[];
+    expect(args).toContain('--model');
+    expect(args).toContain('gpt-5-codex-setting');
   });
 });

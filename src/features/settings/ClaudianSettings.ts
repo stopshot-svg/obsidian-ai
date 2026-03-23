@@ -147,6 +147,19 @@ export class ClaudianSettingTab extends PluginSettingTab {
     providerHint.style.marginBottom = '0.8em';
     providerHint.setText(`${activeProvider.label}: ${activeProvider.description}`);
 
+    new Setting(containerEl)
+      .setName('Codex model')
+      .setDesc('Optional model ID for Codex. Leave empty to use the Codex CLI default.')
+      .addText((text) => {
+        text
+          .setPlaceholder('gpt-5-codex')
+          .setValue(this.plugin.settings.codexModel || '')
+          .onChange(async (value) => {
+            this.plugin.settings.codexModel = value.trim();
+            await this.plugin.saveSettings();
+          });
+      });
+
     new Setting(containerEl).setName(t('settings.customization')).setHeading();
 
     new Setting(containerEl)

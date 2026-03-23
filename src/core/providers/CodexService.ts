@@ -93,7 +93,7 @@ export class CodexService extends ClaudianService {
       vaultPath,
     ];
 
-    const selectedModel = queryOptions?.model?.trim();
+    const selectedModel = queryOptions?.model?.trim() || this.codexPlugin.settings.codexModel?.trim();
     if (selectedModel) {
       commandArgs.push('--model', selectedModel);
     }

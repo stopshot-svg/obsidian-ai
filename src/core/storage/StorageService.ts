@@ -75,6 +75,7 @@ interface LegacySettingsJson {
   allowExternalAccess?: boolean;
   blockedCommands?: unknown;
   model?: string;
+  codexModel?: string;
   thinkingBudget?: string;
   permissionMode?: string;
   lastNonPlanPermissionMode?: string;
@@ -235,6 +236,7 @@ export class StorageService {
       allowExternalAccess: oldSettings.allowExternalAccess ?? DEFAULT_SETTINGS.allowExternalAccess,
       blockedCommands: normalizeBlockedCommands(oldSettings.blockedCommands),
       model: (oldSettings.model as ClaudeModel) ?? DEFAULT_SETTINGS.model,
+      codexModel: oldSettings.codexModel ?? DEFAULT_SETTINGS.codexModel,
       thinkingBudget: (oldSettings.thinkingBudget as StoredClaudianSettings['thinkingBudget']) ?? DEFAULT_SETTINGS.thinkingBudget,
       permissionMode: (oldSettings.permissionMode as StoredClaudianSettings['permissionMode']) ?? DEFAULT_SETTINGS.permissionMode,
       excludedTags: oldSettings.excludedTags ?? DEFAULT_SETTINGS.excludedTags,
