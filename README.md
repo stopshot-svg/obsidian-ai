@@ -8,6 +8,8 @@
 
 An Obsidian plugin that embeds Claude Code as an AI collaborator in your vault. Your vault becomes Claude's working directory, giving it full agentic capabilities: file read/write, search, bash commands, and multi-step workflows.
 
+> Experimental: this fork is adding a switchable `Codex` provider while keeping the same Obsidian UI. Claude remains the default runtime; Codex support is currently in progress.
+
 ## Features
 
 - **Full Agentic Capabilities**: Leverage Claude Code's power to read, write, and edit files, search, and execute bash commands, all within your Obsidian vault.
@@ -24,10 +26,12 @@ An Obsidian plugin that embeds Claude Code as an AI collaborator in your vault. 
 - **Plan Mode**: Toggle plan mode via Shift+Tab in the chat input. Claudian explores and designs before implementing, presenting a plan for approval with options to approve in a new session, continue in the current session, or provide feedback.
 - **Security**: Permission modes (YOLO/Safe/Plan), safety blocklist, and vault confinement with symlink-safe checks.
 - **Claude in Chrome**: Allow Claude to interact with Chrome through the `claude-in-chrome` extension.
+- **Provider Switching (Experimental)**: Switch between `Claude` and `Codex` from Settings while keeping the same chat UI and session chrome.
 
 ## Requirements
 
 - [Claude Code CLI](https://code.claude.com/docs/en/overview) installed (strongly recommend install Claude Code via Native Install)
+- Optional: [Codex CLI](https://github.com/openai/codex) installed if you want to test the experimental Codex provider
 - Obsidian v1.8.9+
 - Claude subscription/API or Custom model provider that supports Anthropic API format ([Openrouter](https://openrouter.ai/docs/guides/guides/claude-code-integration), [Kimi](https://platform.moonshot.ai/docs/guide/agent-support), [GLM](https://docs.z.ai/devpack/tool/claude), [DeepSeek](https://api-docs.deepseek.com/guides/anthropic_api), etc.)
 - Desktop only (macOS, Linux, Windows)
@@ -110,6 +114,7 @@ Use it like Claude Code—read, write, edit, search files in your vault.
 
 ### Features
 
+- **Provider selection**: Choose `Claude` or `Codex` in Settings → Provider
 - **Inline Edit**: Select text + hotkey to edit directly in notes with word-level diff preview
 - **Instruction Mode**: Type `#` to add refined instructions to system prompt
 - **Slash Commands**: Type `/` for custom prompt templates or skills
@@ -121,6 +126,10 @@ Use it like Claude Code—read, write, edit, search files in your vault.
 ## Configuration
 
 ### Settings
+
+- **Provider**
+  - `Active provider`: Switch between `Claude` and `Codex`
+  - `Codex CLI path`: Optional explicit path to `codex` when auto-detection is unavailable
 
 **Customization**
 - **User name**: Your name for personalized greetings
