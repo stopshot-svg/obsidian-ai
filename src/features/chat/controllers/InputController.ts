@@ -568,7 +568,12 @@ export class InputController {
 
     if (!state.currentConversationId) {
       const sessionId = this.getAgentService()?.getSessionId() ?? undefined;
-      const conversation = await plugin.createConversation(sessionId);
+      const providerId = typeof plugin.getEffectiveProviderId === 'function'
+        ? plugin.getEffectiveProviderId()
+        : (typeof plugin.getActiveProviderId === 'function'
+          ? plugin.getActiveProviderId()
+          : (plugin.settings.provider ?? 'claude'));
+      const conversation = await plugin.createConversation(sessionId, providerId);
       state.currentConversationId = conversation.id;
     }
 

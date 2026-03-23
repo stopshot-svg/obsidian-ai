@@ -1037,11 +1037,11 @@ export default class ClaudianPlugin extends Plugin {
    * New conversations always use SDK-native storage.
    * The session ID may be captured after the first SDK response.
    */
-  async createConversation(sessionId?: string): Promise<Conversation> {
+  async createConversation(sessionId?: string, providerId?: ProviderId): Promise<Conversation> {
     const conversationId = sessionId ?? this.generateConversationId();
     const conversation: Conversation = {
       id: conversationId,
-      provider: this.getActiveProviderId(),
+      provider: providerId ?? this.getEffectiveProviderId(),
       title: this.generateDefaultTitle(),
       createdAt: Date.now(),
       updatedAt: Date.now(),

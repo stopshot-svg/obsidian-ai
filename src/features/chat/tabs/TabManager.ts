@@ -442,7 +442,12 @@ export class TabManager implements TabManagerInterface {
   }
 
   private async createForkConversation(context: ForkContext): Promise<string> {
-    const conversation = await this.plugin.createConversation();
+    const providerId = typeof this.plugin.getEffectiveProviderId === 'function'
+      ? this.plugin.getEffectiveProviderId()
+      : (typeof this.plugin.getActiveProviderId === 'function'
+        ? this.plugin.getActiveProviderId()
+        : (this.plugin.settings.provider ?? 'claude'));
+    const conversation = await this.plugin.createConversation(undefined, providerId);
 
     const title = context.sourceTitle
       ? this.buildForkTitle(context.sourceTitle, context.forkAtUserMessage)

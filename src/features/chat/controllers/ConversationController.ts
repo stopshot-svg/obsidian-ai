@@ -449,7 +449,15 @@ export class ConversationController {
     // Entry point with messages - create conversation lazily
     // New conversations always use SDK-native storage.
     if (!state.currentConversationId && state.messages.length > 0) {
-      const conversation = await plugin.createConversation(sessionId ?? undefined);
+      const providerId = typeof plugin.getEffectiveProviderId === 'function'
+        ? plugin.getEffectiveProviderId()
+        : (typeof plugin.getActiveProviderId === 'function'
+          ? plugin.getActiveProviderId()
+          : (plugin.settings.provider ?? 'claude'));
+      const conversation = await plugin.createConversation(
+        sessionId ?? undefined,
+        providerId
+      );
       state.currentConversationId = conversation.id;
     }
 
