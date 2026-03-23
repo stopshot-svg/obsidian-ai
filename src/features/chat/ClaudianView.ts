@@ -99,7 +99,12 @@ export class ClaudianView extends ItemView {
       return;
     }
 
-    const provider = this.plugin.providerManager.getActiveDescriptor(this.plugin.settings);
+    const activeConversationId = this.tabManager?.getActiveTab()?.conversationId ?? null;
+    const conversationProvider = activeConversationId
+      ? this.plugin.getConversationSync(activeConversationId)?.provider
+      : null;
+    const providerId = conversationProvider ?? this.plugin.getActiveProviderId();
+    const provider = this.plugin.providerManager.getDescriptor(providerId);
     const suffix = provider.status === 'experimental' ? ' · Experimental' : '';
     this.providerBadgeEl.setText(`${provider.label}${suffix}`);
     this.providerBadgeEl.setAttribute('aria-label', `Current provider: ${provider.label}`);
@@ -162,6 +167,7 @@ export class ClaudianView extends ItemView {
         onTabSwitched: () => {
           this.updateTabBar();
           this.updateHistoryDropdown();
+          this.refreshProviderBadge();
           this.updateNavRowLocation();
           this.persistTabState();
         },

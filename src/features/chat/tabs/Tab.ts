@@ -248,30 +248,32 @@ export async function initializeTabService(
   let unsubscribeReadyState: (() => void) | null = null;
 
   try {
-    const providerId = typeof plugin.getActiveProviderId === 'function'
+    // Resolve session ID and external contexts from conversation if this is an existing chat
+    // Single source of truth: tab.conversationId determines if we have a session to resume
+    const conversation = tab.conversationId
+      ? await plugin.getConversationById(tab.conversationId)
+      : null;
+    let sessionId: string | undefined;
+    let externalContextPaths = plugin.settings.persistentExternalContextPaths || [];
+    let providerId = typeof plugin.getActiveProviderId === 'function'
       ? plugin.getActiveProviderId()
       : (plugin.settings.provider ?? 'claude');
+    if (conversation) {
+      providerId = conversation.provider ?? providerId;
+      const hasMessages = conversation.messages.length > 0;
+      externalContextPaths = hasMessages
+        ? conversation.externalContextPaths || []
+        : (plugin.settings.persistentExternalContextPaths || []);
+    }
+
     service = createRuntimeService(plugin, mcpManager, providerId);
     unsubscribeReadyState = service.onReadyStateChange((ready) => {
       tab.ui.modelSelector?.setReady(ready);
     });
     tab.dom.eventCleanups.push(() => unsubscribeReadyState?.());
 
-    // Resolve session ID and external contexts from conversation if this is an existing chat
-    // Single source of truth: tab.conversationId determines if we have a session to resume
-    let sessionId: string | undefined;
-    let externalContextPaths = plugin.settings.persistentExternalContextPaths || [];
-    if (tab.conversationId) {
-      const conversation = await plugin.getConversationById(tab.conversationId);
-
-      if (conversation) {
-        sessionId = service.applyForkState(conversation) ?? undefined;
-
-        const hasMessages = conversation.messages.length > 0;
-        externalContextPaths = hasMessages
-          ? conversation.externalContextPaths || []
-          : (plugin.settings.persistentExternalContextPaths || []);
-      }
+    if (conversation) {
+      sessionId = service.applyForkState(conversation) ?? sessionId ?? undefined;
     }
 
     // Ensure SDK process is ready
