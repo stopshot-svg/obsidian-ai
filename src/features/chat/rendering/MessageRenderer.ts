@@ -228,8 +228,8 @@ export class MessageRenderer {
             continue;
           }
           const textEl = contentEl.createDiv({ cls: 'claudian-text-block' });
-          if (msg.provider === 'codex') {
-            textEl.setAttribute('data-provider', 'codex');
+          if (msg.provider === 'codex' || msg.provider === 'gemini') {
+            textEl.setAttribute('data-provider', msg.provider);
             textEl.setAttribute('data-stage', 'final');
           }
           void this.renderContent(textEl, block.content);
@@ -266,8 +266,8 @@ export class MessageRenderer {
       // Fallback for old conversations without contentBlocks
       if (msg.content) {
         const textEl = contentEl.createDiv({ cls: 'claudian-text-block' });
-        if (msg.provider === 'codex') {
-          textEl.setAttribute('data-provider', 'codex');
+        if (msg.provider === 'codex' || msg.provider === 'gemini') {
+          textEl.setAttribute('data-provider', msg.provider);
           textEl.setAttribute('data-stage', 'final');
         }
         void this.renderContent(textEl, msg.content);
