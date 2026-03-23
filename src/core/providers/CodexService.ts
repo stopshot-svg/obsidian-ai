@@ -68,7 +68,7 @@ export class CodexService extends ClaudianService {
     prompt: string,
     _images?: ImageAttachment[],
     _conversationHistory?: ChatMessage[],
-    _queryOptions?: QueryOptions
+    queryOptions?: QueryOptions
   ): AsyncGenerator<StreamChunk> {
     const resolvedCodexPath = this.codexPlugin.getResolvedCodexCliPath();
     if (!resolvedCodexPath) {
@@ -93,9 +93,21 @@ export class CodexService extends ClaudianService {
       vaultPath,
     ];
 
+    const selectedModel = queryOptions?.model?.trim();
+    if (selectedModel) {
+      commandArgs.push('--model', selectedModel);
+    }
+
     const sessionId = this.getSessionId();
     if (sessionId) {
       commandArgs.push('resume', sessionId);
+    }
+
+    const additionalDirectories = queryOptions?.externalContextPaths ?? [];
+    for (const dir of additionalDirectories) {
+      if (dir && dir.trim()) {
+        commandArgs.push('--add-dir', dir.trim());
+      }
     }
 
     const env = this.buildExecEnv();

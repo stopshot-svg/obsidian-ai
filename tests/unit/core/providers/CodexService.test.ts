@@ -1,9 +1,34 @@
+import { EventEmitter } from 'events';
+import { PassThrough } from 'stream';
+
 import { CodexService } from '@/core/providers/CodexService';
+
+jest.mock('child_process', () => ({
+  spawn: jest.fn(),
+}));
+
+class FakeChildProcess extends EventEmitter {
+  stdin = new PassThrough();
+  stdout = new PassThrough();
+  stderr = new PassThrough();
+  killed = false;
+
+  kill(): boolean {
+    this.killed = true;
+    return true;
+  }
+}
 
 describe('CodexService', () => {
   const createService = () => {
     const plugin = {
-      app: {},
+      app: {
+        vault: {
+          adapter: {
+            basePath: '/tmp/vault',
+          },
+        },
+      },
       settings: {
         model: 'haiku',
       },
@@ -13,6 +38,10 @@ describe('CodexService', () => {
 
     return new CodexService(plugin, {} as any);
   };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
   it('maps thread.started to session capture without UI chunks', () => {
     const service = createService();
@@ -93,5 +122,42 @@ describe('CodexService', () => {
       content: 'file-a\\nfile-b',
       isError: false,
     }]);
+  });
+
+  it('passes model and external directories to codex exec', async () => {
+    const { spawn } = jest.requireMock('child_process') as { spawn: jest.Mock };
+    const child = new FakeChildProcess();
+    spawn.mockReturnValue(child);
+
+    const service = createService();
+
+    setImmediate(() => {
+      child.stdout.write(JSON.stringify({ type: 'turn.completed', usage: {} }) + '\n');
+      child.stdout.end();
+      child.stderr.end();
+      child.emit('exit', 0, null);
+    });
+
+    const chunks: unknown[] = [];
+    for await (const chunk of service.query(
+      'hello',
+      undefined,
+      undefined,
+      {
+        model: 'gpt-5-codex',
+        externalContextPaths: ['/tmp/project-a', '/tmp/project-b'],
+      }
+    )) {
+      chunks.push(chunk);
+    }
+
+    expect(chunks).toContainEqual({ type: 'done' });
+    expect(spawn).toHaveBeenCalled();
+    const args = spawn.mock.calls[0][1] as string[];
+    expect(args).toContain('--model');
+    expect(args).toContain('gpt-5-codex');
+    expect(args).toContain('--add-dir');
+    expect(args).toContain('/tmp/project-a');
+    expect(args).toContain('/tmp/project-b');
   });
 });
