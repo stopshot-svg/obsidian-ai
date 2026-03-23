@@ -422,6 +422,16 @@ describe('ClaudianPlugin', () => {
       expect(fetched?.id).toBe(conv.id);
     });
 
+    it('should mark codex native sessions with codex preview text', async () => {
+      await plugin.onload();
+
+      const conv = await plugin.createConversation(undefined, 'codex');
+      const list = plugin.getConversationList();
+      const entry = list.find((item) => item.id === conv.id);
+
+      expect(entry?.preview).toBe('Codex session');
+    });
+
     it('should generate default title with timestamp', async () => {
       await plugin.onload();
 
@@ -482,6 +492,17 @@ describe('ClaudianPlugin', () => {
       const result = await plugin.switchConversation('non-existent-id');
 
       expect(result).toBeNull();
+    });
+
+    it('should not attempt Claude SDK message loading for codex sessions', async () => {
+      await plugin.onload();
+
+      const conv = await plugin.createConversation(undefined, 'codex');
+      const sdkSpy = jest.spyOn(sdkSession, 'sdkSessionExists');
+
+      await plugin.switchConversation(conv.id);
+
+      expect(sdkSpy).not.toHaveBeenCalled();
     });
   });
 

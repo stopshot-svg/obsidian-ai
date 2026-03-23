@@ -794,7 +794,10 @@ export default class ClaudianPlugin extends Plugin {
     if (!firstUserMsg) {
       // For native sessions without loaded messages, indicate it's a persisted session
       // rather than "New conversation" which implies no content exists
-      return conv.isNative ? 'SDK session' : 'New conversation';
+      if (conv.isNative) {
+        return conv.provider === 'codex' ? 'Codex session' : 'SDK session';
+      }
+      return 'New conversation';
     }
     return firstUserMsg.content.substring(0, 50) + (firstUserMsg.content.length > 50 ? '...' : '');
   }
@@ -808,6 +811,10 @@ export default class ClaudianPlugin extends Plugin {
 
   private async loadSdkMessagesForConversation(conversation: Conversation): Promise<void> {
     if (!conversation.isNative || conversation.sdkMessagesLoaded) return;
+    if (conversation.provider === 'codex') {
+      conversation.sdkMessagesLoaded = true;
+      return;
+    }
 
     const vaultPath = getVaultPath(this.app);
     if (!vaultPath) return;
