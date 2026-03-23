@@ -238,7 +238,7 @@ export default class ClaudianPlugin extends Plugin {
       id: 'inline-edit',
       name: 'Inline edit',
       editorCallback: async (editor: Editor, view: MarkdownView) => {
-        const provider = this.providerManager.getActiveDescriptor(this.settings);
+        const provider = this.providerManager.getDescriptor(this.getEffectiveProviderId());
         if (!provider.capabilities.inlineEdit) {
           new Notice(`${provider.label} does not support inline edit yet.`);
           return;
@@ -681,6 +681,17 @@ export default class ClaudianPlugin extends Plugin {
 
   getActiveProviderId(): ProviderId {
     return this.providerManager.getActiveProviderId(this.settings);
+  }
+
+  getEffectiveProviderId(): ProviderId {
+    const activeConversationId = this.getView()?.getActiveTab()?.conversationId ?? null;
+    if (activeConversationId) {
+      const conversationProvider = this.getConversationSync(activeConversationId)?.provider;
+      if (conversationProvider) {
+        return conversationProvider;
+      }
+    }
+    return this.getActiveProviderId();
   }
 
   private getDefaultModelValues(): string[] {
