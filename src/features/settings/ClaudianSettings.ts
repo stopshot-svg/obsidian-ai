@@ -147,6 +147,15 @@ export class ClaudianSettingTab extends PluginSettingTab {
     providerHint.style.marginBottom = '0.8em';
     providerHint.setText(`${activeProvider.label}: ${activeProvider.description}`);
 
+    if (activeProvider.id === 'codex') {
+      const codexSupportHint = containerEl.createDiv({ cls: 'claudian-provider-hint' });
+      codexSupportHint.style.fontSize = '0.9em';
+      codexSupportHint.style.color = 'var(--text-warning)';
+      codexSupportHint.style.marginTop = '-0.2em';
+      codexSupportHint.style.marginBottom = '0.8em';
+      codexSupportHint.setText('Current Codex support: chat, external directories, images, command/tool stream. Inline edit, instruction mode, AI title generation, MCP, and Claude SDK slash commands are not wired yet.');
+    }
+
     new Setting(containerEl)
       .setName('Codex model')
       .setDesc('Optional model ID for Codex. Leave empty to use the Codex CLI default.')
