@@ -58,4 +58,40 @@ describe('CodexService', () => {
     });
     expect(chunks[1]).toEqual({ type: 'done' });
   });
+
+  it('maps command execution items to bash tool chunks', () => {
+    const service = createService();
+    const started = (service as any).mapThreadEventToChunks({
+      type: 'item.started',
+      item: {
+        id: 'cmd-1',
+        type: 'command_execution',
+        command: 'ls -la',
+      },
+    });
+
+    expect(started).toEqual([{
+      type: 'tool_use',
+      id: 'cmd-1',
+      name: 'Bash',
+      input: { command: 'ls -la' },
+    }]);
+
+    const completed = (service as any).mapThreadEventToChunks({
+      type: 'item.completed',
+      item: {
+        id: 'cmd-1',
+        type: 'command_execution',
+        aggregated_output: 'file-a\\nfile-b',
+        status: 'completed',
+      },
+    });
+
+    expect(completed).toEqual([{
+      type: 'tool_result',
+      id: 'cmd-1',
+      content: 'file-a\\nfile-b',
+      isError: false,
+    }]);
+  });
 });

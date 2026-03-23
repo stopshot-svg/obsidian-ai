@@ -5,22 +5,38 @@ import type { ImageAttachment, ChatMessage, StreamChunk } from '../types';
 import type ClaudianPlugin from '../../main';
 import type { McpServerManager } from '../mcp';
 import { ClaudianService, type QueryOptions } from '../agent';
+import { TOOL_BASH } from '../tools/toolNames';
 import { parseEnvironmentVariables } from '../../utils/env';
 import { getVaultPath } from '../../utils/path';
 
 type CodexThreadEvent =
   | { type: 'thread.started'; thread_id: string }
+  | {
+    type: 'item.started' | 'item.updated';
+    item?: {
+      id?: string;
+      type?: string;
+      text?: string;
+      message?: string;
+      command?: string;
+      aggregated_output?: string;
+      exit_code?: number | null;
+      status?: string;
+    };
+  }
   | { type: 'turn.completed'; usage?: { input_tokens?: number; cached_input_tokens?: number; output_tokens?: number } }
   | { type: 'turn.failed'; error?: { message?: string } }
   | {
     type: 'item.completed';
     item?: {
+      id?: string;
       type?: string;
       text?: string;
       message?: string;
       command?: string;
+      aggregated_output?: string;
+      exit_code?: number | null;
       status?: string;
-      id?: string;
     };
   }
   | { type: 'error'; message?: string };
@@ -216,6 +232,17 @@ export class CodexService extends ClaudianService {
         return [{ type: 'error', content: event.error?.message ?? 'Codex turn failed.' }];
       case 'error':
         return [{ type: 'error', content: event.message ?? 'Codex exec error.' }];
+      case 'item.started':
+      case 'item.updated':
+        if (event.item?.type === 'command_execution' && event.item.command) {
+          return [{
+            type: 'tool_use',
+            id: event.item.id ?? `codex-bash-${Date.now()}`,
+            name: TOOL_BASH,
+            input: { command: event.item.command },
+          }];
+        }
+        return [];
       case 'item.completed': {
         const itemType = event.item?.type;
         if (itemType === 'agent_message' && event.item?.text) {
@@ -223,6 +250,14 @@ export class CodexService extends ClaudianService {
         }
         if (itemType === 'reasoning' && event.item?.text) {
           return [{ type: 'thinking', content: event.item.text }];
+        }
+        if (itemType === 'command_execution' && event.item?.id) {
+          return [{
+            type: 'tool_result',
+            id: event.item.id,
+            content: event.item.aggregated_output ?? '',
+            isError: event.item.status === 'failed',
+          }];
         }
         if (itemType === 'error' && event.item?.message) {
           return [{ type: 'error', content: event.item.message }];
