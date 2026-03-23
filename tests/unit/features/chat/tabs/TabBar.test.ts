@@ -18,6 +18,7 @@ function createTabBarItem(overrides: Partial<TabBarItem> = {}): TabBarItem {
     id: 'tab-1',
     index: 1,
     title: 'Test Tab',
+    provider: 'claude',
     isActive: false,
     isStreaming: false,
     needsAttention: false,
@@ -96,8 +97,18 @@ describe('TabBar', () => {
 
       tabBar.update([createTabBarItem({ title: 'My Conversation' })]);
 
-      expect(containerEl._children[0].getAttribute('title')).toBe('My Conversation');
-      expect(containerEl._children[0].getAttribute('aria-label')).toBe('My Conversation');
+      expect(containerEl._children[0].getAttribute('title')).toBe('My Conversation · Claude');
+      expect(containerEl._children[0].getAttribute('aria-label')).toBe('My Conversation · Claude');
+    });
+
+    it('should include provider in tooltip for codex tabs', () => {
+      const containerEl = createMockEl();
+      const callbacks = createMockCallbacks();
+      const tabBar = new TabBar(containerEl, callbacks);
+
+      tabBar.update([createTabBarItem({ title: 'Codex Session', provider: 'codex' })]);
+
+      expect(containerEl._children[0].getAttribute('title')).toBe('Codex Session · Codex');
     });
   });
 

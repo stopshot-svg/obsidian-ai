@@ -56,14 +56,16 @@ export class TabBar {
       stateClass = 'claudian-tab-badge-streaming';
     }
 
+    const providerLabel = item.provider === 'codex' ? 'Codex' : 'Claude';
+    const tooltip = `${item.title} · ${providerLabel}`;
     const badgeEl = this.containerEl.createDiv({
       cls: `claudian-tab-badge ${stateClass}`,
       text: String(item.index),
     });
 
     // Tooltip with full title
-    badgeEl.setAttribute('aria-label', item.title);
-    badgeEl.setAttribute('title', item.title);
+    badgeEl.setAttribute('aria-label', tooltip);
+    badgeEl.setAttribute('title', tooltip);
 
     // Click handler to switch tab
     badgeEl.addEventListener('click', () => {

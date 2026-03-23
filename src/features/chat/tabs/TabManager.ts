@@ -316,6 +316,10 @@ export class TabManager implements TabManagerInterface {
         id: tab.id,
         index: index++,
         title: getTabTitle(tab, this.plugin),
+        provider: tab.serviceProviderId
+          ?? (tab.conversationId ? this.plugin.getConversationSync(tab.conversationId)?.provider : undefined)
+          ?? this.plugin.settings.provider
+          ?? 'claude',
         isActive: tab.id === this.activeTabId,
         isStreaming: tab.state.isStreaming,
         needsAttention: tab.state.needsAttention,
