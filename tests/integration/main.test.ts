@@ -46,7 +46,7 @@ describe('ClaudianPlugin', () => {
     };
 
     mockManifest = {
-      id: 'claudian',
+      id: 'obsidian-ai',
       name: 'Obsidian AI',
       version: '0.1.0',
     };

@@ -42,11 +42,11 @@ Obsidian AI is an Obsidian plugin that turns your vault into an AI workspace wit
 ### From GitHub Release (recommended)
 
 1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/stopshot-svg/obsidian-ai/releases/latest)
-2. Create a folder called `claudian` in your vault's plugins folder:
+2. Create a folder called `obsidian-ai` in your vault's plugins folder:
    ```
-   /path/to/vault/.obsidian/plugins/claudian/
+   /path/to/vault/.obsidian/plugins/obsidian-ai/
    ```
-3. Copy the downloaded files into the `claudian` folder
+3. Copy the downloaded files into the `obsidian-ai` folder
 4. Enable the plugin in Obsidian:
    - Settings → Community plugins → Enable "Obsidian AI"
 
