@@ -92,9 +92,16 @@ export class CodexService extends ClaudianService {
       'exec',
       '--experimental-json',
       '--skip-git-repo-check',
+      '--sandbox',
+      this.mapSandboxMode(),
       '--cd',
       vaultPath,
     ];
+
+    commandArgs.push(
+      '--config',
+      `approval_policy="${this.mapApprovalPolicy()}"`
+    );
 
     const selectedModel = queryOptions?.model?.trim() || this.codexPlugin.settings.codexModel?.trim();
     if (selectedModel) {
@@ -224,6 +231,23 @@ export class CodexService extends ClaudianService {
     }
     env.GIT_TERMINAL_PROMPT = '0';
     return env;
+  }
+
+  private mapApprovalPolicy(): 'never' | 'on-request' {
+    switch (this.codexPlugin.settings.permissionMode) {
+      case 'yolo':
+        return 'never';
+      case 'plan':
+      case 'normal':
+      default:
+        return 'on-request';
+    }
+  }
+
+  private mapSandboxMode(): 'workspace-write' | 'danger-full-access' {
+    return this.codexPlugin.settings.allowExternalAccess
+      ? 'danger-full-access'
+      : 'workspace-write';
   }
 
   private async materializeImages(images: ImageAttachment[]): Promise<string | null> {

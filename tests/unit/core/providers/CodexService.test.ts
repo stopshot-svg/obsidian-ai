@@ -32,6 +32,8 @@ describe('CodexService', () => {
       settings: {
         model: 'haiku',
         codexModel: '',
+        permissionMode: 'yolo',
+        allowExternalAccess: false,
       },
       getResolvedCodexCliPath: jest.fn().mockReturnValue('/usr/local/bin/codex'),
       getActiveEnvironmentVariables: jest.fn().mockReturnValue(''),
@@ -157,6 +159,10 @@ describe('CodexService', () => {
     const args = spawn.mock.calls[0][1] as string[];
     expect(args).toContain('--model');
     expect(args).toContain('gpt-5-codex');
+    expect(args).toContain('--sandbox');
+    expect(args).toContain('workspace-write');
+    expect(args).toContain('--config');
+    expect(args).toContain('approval_policy="never"');
     expect(args).toContain('--add-dir');
     expect(args).toContain('/tmp/project-a');
     expect(args).toContain('/tmp/project-b');
@@ -184,6 +190,30 @@ describe('CodexService', () => {
     const args = spawn.mock.calls[0][1] as string[];
     expect(args).toContain('--model');
     expect(args).toContain('gpt-5-codex-setting');
+  });
+
+  it('maps allowExternalAccess to danger-full-access sandbox', async () => {
+    const { spawn } = jest.requireMock('child_process') as { spawn: jest.Mock };
+    const child = new FakeChildProcess();
+    spawn.mockReturnValue(child);
+
+    const service = createService();
+    (service as any).codexPlugin.settings.allowExternalAccess = true;
+
+    setImmediate(() => {
+      child.stdout.write(JSON.stringify({ type: 'turn.completed', usage: {} }) + '\n');
+      child.stdout.end();
+      child.stderr.end();
+      child.emit('exit', 0, null);
+    });
+
+    for await (const _chunk of service.query('hello')) {
+      // drain
+    }
+
+    const args = spawn.mock.calls[0][1] as string[];
+    expect(args).toContain('--sandbox');
+    expect(args).toContain('danger-full-access');
   });
 
   it('materializes image attachments into temporary files', async () => {
