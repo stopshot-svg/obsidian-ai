@@ -84,6 +84,7 @@ export class MessageRenderer {
       attr: {
         'data-message-id': msg.id,
         'data-role': msg.role,
+        ...(msg.provider ? { 'data-provider': msg.provider } : {}),
       },
     });
 

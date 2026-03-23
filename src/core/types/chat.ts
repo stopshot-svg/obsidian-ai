@@ -43,6 +43,7 @@ export type ContentBlock =
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
+  provider?: ProviderId;
   content: string;
   /** Display-only content (e.g., "/tests" when content is the expanded prompt). */
   displayContent?: string;

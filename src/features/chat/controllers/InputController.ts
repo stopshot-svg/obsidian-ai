@@ -277,10 +277,17 @@ export class InputController {
 
     await this.triggerTitleGeneration();
 
+    const effectiveProvider = typeof plugin.getEffectiveProviderId === 'function'
+      ? plugin.getEffectiveProviderId()
+      : (typeof plugin.getActiveProviderId === 'function'
+        ? plugin.getActiveProviderId()
+        : (plugin.settings.provider ?? 'claude'));
+
     const assistantMsg: ChatMessage = {
       id: this.deps.generateId(),
       role: 'assistant',
       content: '',
+      provider: effectiveProvider,
       timestamp: Date.now(),
       toolCalls: [],
       contentBlocks: [],
@@ -299,12 +306,6 @@ export class InputController {
       isCompact ? 'claudian-thinking--compact' : undefined,
     );
     state.responseStartTime = performance.now();
-
-    const effectiveProvider = typeof plugin.getEffectiveProviderId === 'function'
-      ? plugin.getEffectiveProviderId()
-      : (typeof plugin.getActiveProviderId === 'function'
-        ? plugin.getActiveProviderId()
-        : (plugin.settings.provider ?? 'claude'));
     const providerDescriptor = plugin.providerManager?.getDescriptor?.(effectiveProvider);
     if (providerDescriptor?.capabilities.mcp !== false) {
       // Extract @-mentioned MCP servers from prompt

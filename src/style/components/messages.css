@@ -91,6 +91,71 @@
   margin: 0;
 }
 
+.claudian-message-assistant[data-provider="codex"] .claudian-text-block,
+.claudian-message-assistant[data-provider="codex"] .claudian-text-block p,
+.claudian-message-assistant[data-provider="codex"] .claudian-text-block li,
+.claudian-message-assistant[data-provider="codex"] .claudian-text-block blockquote {
+  font-family: var(--font-interface, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+  letter-spacing: 0;
+}
+
+.claudian-message-assistant[data-provider="codex"] .claudian-text-block {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-normal);
+}
+
+.claudian-message-assistant[data-provider="codex"] .claudian-text-block p {
+  margin: 0 0 10px 0;
+}
+
+.claudian-message-assistant[data-provider="codex"] .claudian-text-block h1,
+.claudian-message-assistant[data-provider="codex"] .claudian-text-block h2,
+.claudian-message-assistant[data-provider="codex"] .claudian-text-block h3,
+.claudian-message-assistant[data-provider="codex"] .claudian-text-block h4 {
+  font-family: var(--font-interface, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  margin: 14px 0 8px;
+}
+
+.claudian-message-assistant[data-provider="codex"] .claudian-text-block h1 {
+  font-size: 1.18em;
+}
+
+.claudian-message-assistant[data-provider="codex"] .claudian-text-block h2 {
+  font-size: 1.1em;
+}
+
+.claudian-message-assistant[data-provider="codex"] .claudian-text-block h3,
+.claudian-message-assistant[data-provider="codex"] .claudian-text-block h4 {
+  font-size: 1.02em;
+}
+
+.claudian-message-assistant[data-provider="codex"] .claudian-text-block ul,
+.claudian-message-assistant[data-provider="codex"] .claudian-text-block ol {
+  margin: 8px 0 10px 1.2em;
+  padding-inline-start: 1.1em;
+}
+
+.claudian-message-assistant[data-provider="codex"] .claudian-text-block li + li {
+  margin-top: 4px;
+}
+
+.claudian-message-assistant[data-provider="codex"] .claudian-text-block blockquote {
+  margin: 10px 0;
+  padding: 8px 12px;
+  border-inline-start: 3px solid var(--background-modifier-border);
+  background: var(--background-secondary-alt);
+  border-radius: 0 8px 8px 0;
+  color: var(--text-muted);
+}
+
+.claudian-message-assistant[data-provider="codex"] .claudian-text-block table {
+  margin: 10px 0;
+}
+
 .claudian-text-copy-btn {
   position: absolute;
   bottom: 0;
