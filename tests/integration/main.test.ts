@@ -117,6 +117,18 @@ describe('ClaudianPlugin', () => {
       expect((plugin.addSettingTab as jest.Mock)).toHaveBeenCalled();
     });
 
+    it('should still load when later startup initialization fails', async () => {
+      jest.spyOn(plugin as any, 'finishStartupInitialization').mockRejectedValueOnce(new Error('late startup failure'));
+
+      await expect(plugin.onload()).resolves.toBeUndefined();
+
+      expect((plugin.registerView as jest.Mock)).toHaveBeenCalledWith(
+        VIEW_TYPE_CLAUDIAN,
+        expect.any(Function)
+      );
+      expect((plugin.addSettingTab as jest.Mock)).toHaveBeenCalled();
+    });
+
     it('should migrate legacy cli path to hostname-based paths and clear old field', async () => {
       const legacyPath = '/legacy/claude';
       mockApp.vault.adapter.exists.mockImplementation(async (path: string) => {

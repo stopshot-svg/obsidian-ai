@@ -248,6 +248,18 @@ export default class ClaudianPlugin extends Plugin {
 
     this.addSettingTab(new ClaudianSettingTab(this.app, this));
 
+    try {
+      await this.finishStartupInitialization();
+    } catch (error) {
+      this.reportStartupIssue(
+        'Obsidian AI finished loading with reduced functionality because startup initialization failed.',
+        error
+      );
+    }
+  }
+
+  private async finishStartupInitialization(): Promise<void> {
+
     // Initialize MCP manager (shared for agent + UI)
     this.mcpManager = new McpServerManager(this.storage.mcp);
     try {
