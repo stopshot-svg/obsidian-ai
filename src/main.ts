@@ -238,6 +238,12 @@ export default class ClaudianPlugin extends Plugin {
       id: 'inline-edit',
       name: 'Inline edit',
       editorCallback: async (editor: Editor, view: MarkdownView) => {
+        const provider = this.providerManager.getActiveDescriptor(this.settings);
+        if (!provider.capabilities.inlineEdit) {
+          new Notice(`${provider.label} does not support inline edit yet.`);
+          return;
+        }
+
         const selectedText = editor.getSelection();
         const notePath = view.file?.path || 'unknown';
 

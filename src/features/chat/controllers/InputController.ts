@@ -668,7 +668,12 @@ export class InputController {
     const instructionRefineService = this.deps.getInstructionRefineService();
     const instructionModeManager = this.deps.getInstructionModeManager();
 
-    if (!instructionRefineService) return;
+    if (!instructionRefineService) {
+      const provider = plugin.providerManager?.getActiveDescriptor?.(plugin.settings);
+      new Notice(`${provider?.label ?? 'Current provider'} does not support instruction mode yet.`);
+      instructionModeManager?.clear();
+      return;
+    }
 
     const existingPrompt = plugin.settings.systemPrompt;
     let modal: InstructionModal | null = null;

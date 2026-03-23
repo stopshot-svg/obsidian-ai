@@ -311,7 +311,9 @@ function createMockPlugin(overrides: Record<string, any> = {}): any {
     },
     settings: {
       excludedTags: [],
+      provider: 'claude',
       model: 'claude-sonnet-4-5',
+      codexModel: '',
       thinkingBudget: 'low',
       permissionMode: 'yolo',
       slashCommands: [],
@@ -322,6 +324,23 @@ function createMockPlugin(overrides: Record<string, any> = {}): any {
       },
       persistentExternalContextPaths: [],
     },
+    providerManager: {
+      getDescriptor: jest.fn((providerId: string) => ({
+        id: providerId,
+        label: providerId === 'codex' ? 'Codex' : 'Claude',
+        status: providerId === 'codex' ? 'experimental' : 'stable',
+        description: '',
+        capabilities: {
+          inlineEdit: providerId !== 'codex',
+          instructionRefine: providerId !== 'codex',
+          mcp: providerId !== 'codex',
+          persistentConversation: true,
+          slashCommands: true,
+          titleGeneration: providerId !== 'codex',
+        },
+      })),
+    },
+    getActiveProviderId: jest.fn(function(this: any) { return this.settings.provider ?? 'claude'; }),
     mcpManager: { getMcpServers: jest.fn().mockReturnValue([]) },
     agentManager: { searchAgents: jest.fn().mockReturnValue([]) },
     getConversationById: jest.fn().mockResolvedValue(null),
@@ -961,6 +980,21 @@ describe('Tab - UI Initialization', () => {
       initializeTabUI(tab, options.plugin);
 
       expect(tab.services.titleGenerationService).toBeDefined();
+    });
+
+    it('should disable instruction refine and title generation services for codex provider', () => {
+      const plugin = createMockPlugin({
+        settings: {
+          ...createMockPlugin().settings,
+          provider: 'codex',
+        },
+      });
+      const tab = createTab(createMockOptions({ plugin }));
+
+      initializeTabUI(tab, plugin);
+
+      expect(tab.services.instructionRefineService).toBeNull();
+      expect(tab.services.titleGenerationService).toBeNull();
     });
 
     it('should create InstructionModeManager', () => {

@@ -2,9 +2,11 @@ import type { ProviderId } from '../types';
 
 export interface ProviderCapabilities {
   inlineEdit: boolean;
+  instructionRefine: boolean;
   mcp: boolean;
   persistentConversation: boolean;
   slashCommands: boolean;
+  titleGeneration: boolean;
 }
 
 export interface ProviderDescriptor {
@@ -23,9 +25,11 @@ export const PROVIDER_DESCRIPTORS: Record<ProviderId, ProviderDescriptor> = {
     description: 'Current default runtime powered by Claude Code.',
     capabilities: {
       inlineEdit: true,
+      instructionRefine: true,
       mcp: true,
       persistentConversation: true,
       slashCommands: true,
+      titleGeneration: true,
     },
   },
   codex: {
@@ -35,9 +39,11 @@ export const PROVIDER_DESCRIPTORS: Record<ProviderId, ProviderDescriptor> = {
     description: 'Upcoming alternate runtime with matching Obsidian UI.',
     capabilities: {
       inlineEdit: false,
+      instructionRefine: false,
       mcp: false,
       persistentConversation: false,
       slashCommands: false,
+      titleGeneration: false,
     },
   },
 };

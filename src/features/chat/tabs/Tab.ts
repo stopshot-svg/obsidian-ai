@@ -391,9 +391,17 @@ function initializeSlashCommands(
  */
 function initializeInstructionAndTodo(tab: TabData, plugin: ClaudianPlugin): void {
   const { dom } = tab;
+  const conversationProvider = tab.conversationId
+    ? plugin.getConversationSync(tab.conversationId)?.provider
+    : null;
+  const provider = plugin.providerManager.getDescriptor(conversationProvider ?? plugin.getActiveProviderId());
 
-  tab.services.instructionRefineService = new InstructionRefineService(plugin);
-  tab.services.titleGenerationService = new TitleGenerationService(plugin);
+  tab.services.instructionRefineService = provider.capabilities.instructionRefine
+    ? new InstructionRefineService(plugin)
+    : null;
+  tab.services.titleGenerationService = provider.capabilities.titleGeneration
+    ? new TitleGenerationService(plugin)
+    : null;
   tab.ui.instructionModeManager = new InstructionModeManagerClass(
     dom.inputEl,
     {
