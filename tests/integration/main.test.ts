@@ -538,6 +538,17 @@ describe('ClaudianPlugin', () => {
       expect(list.find(c => c.id === convId)).toBeUndefined();
     });
 
+    it('should not delete Claude SDK session files for codex conversations', async () => {
+      await plugin.onload();
+
+      const conv = await plugin.createConversation('codex-thread-1', 'codex');
+      const deleteSdkSpy = jest.spyOn(sdkSession, 'deleteSDKSession').mockResolvedValue(undefined as any);
+
+      await plugin.deleteConversation(conv.id);
+
+      expect(deleteSdkSpy).not.toHaveBeenCalled();
+    });
+
     it('should allow deleting last conversation without recreating', async () => {
       await plugin.onload();
 

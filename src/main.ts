@@ -1102,7 +1102,7 @@ export default class ClaudianPlugin extends Plugin {
 
     const vaultPath = getVaultPath(this.app);
     const sdkSessionId = conversation.sdkSessionId ?? conversation.sessionId;
-    if (vaultPath && sdkSessionId) {
+    if (vaultPath && sdkSessionId && conversation.provider !== 'codex') {
       await deleteSDKSession(vaultPath, sdkSessionId);
     }
 
