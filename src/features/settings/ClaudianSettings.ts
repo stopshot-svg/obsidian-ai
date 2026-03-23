@@ -75,6 +75,10 @@ function addHotkeySettingRow(
   item.addEventListener('click', () => openHotkeySettings(app));
 }
 
+function isSimplifiedChineseLocale(locale: string | undefined): boolean {
+  return locale === 'zh' || locale === 'zh-CN' || locale === 'zh-Hans';
+}
+
 export class ClaudianSettingTab extends PluginSettingTab {
   plugin: ClaudianPlugin;
   private contextLimitsContainer: HTMLElement | null = null;
@@ -94,6 +98,7 @@ export class ClaudianSettingTab extends PluginSettingTab {
     containerEl.addClass('claudian-settings');
 
     setLocale(this.plugin.settings.locale);
+    const isZhCN = isSimplifiedChineseLocale(this.plugin.settings.locale);
 
     new Setting(containerEl)
       .setName(t('settings.language.name'))
@@ -118,11 +123,13 @@ export class ClaudianSettingTab extends PluginSettingTab {
           });
       });
 
-    new Setting(containerEl).setName('Provider').setHeading();
+    new Setting(containerEl).setName(isZhCN ? '模型提供方' : 'Provider').setHeading();
 
     new Setting(containerEl)
       .setName('获取 API KEY')
-      .setDesc('前往 claude-code.org.cn 获取可用于 Claude / Codex 兼容配置的 API KEY。')
+      .setDesc(isZhCN
+        ? '前往 claude-code.org.cn 获取可用于 Claude / Codex 兼容配置的 API KEY。'
+        : 'Get an API key for Claude / Codex-compatible setups from claude-code.org.cn.')
       .addButton((button) => {
         button
           .setButtonText('立即获取')
@@ -133,11 +140,13 @@ export class ClaudianSettingTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName('Active provider')
-      .setDesc('Choose which runtime powers the shared Obsidian UI.')
+      .setName(isZhCN ? '当前模型提供方' : 'Active provider')
+      .setDesc(isZhCN ? '选择当前这套 Obsidian AI 界面使用哪一种运行时。' : 'Choose which runtime powers the shared Obsidian UI.')
       .addDropdown((dropdown) => {
         for (const provider of this.plugin.providerManager.listProviders()) {
-          const suffix = provider.status === 'experimental' ? ' (Experimental)' : '';
+          const suffix = provider.status === 'experimental'
+            ? (isZhCN ? '（实验性）' : ' (Experimental)')
+            : '';
           dropdown.addOption(provider.id, `${provider.label}${suffix}`);
         }
         dropdown
@@ -157,7 +166,13 @@ export class ClaudianSettingTab extends PluginSettingTab {
     providerHint.style.color = 'var(--text-muted)';
     providerHint.style.marginTop = '-0.4em';
     providerHint.style.marginBottom = '0.8em';
-    providerHint.setText(`${activeProvider.label}: ${activeProvider.description}`);
+    const providerDescriptions = isZhCN
+      ? {
+        claude: 'Claude Code 运行时，功能最完整。',
+        codex: 'OpenAI / Codex 运行时，沿用同一套 Obsidian 界面，支持 Ask/Auto 权限与 CLI 管理模型。',
+      }
+      : null;
+    providerHint.setText(`${activeProvider.label}: ${providerDescriptions?.[activeProvider.id] ?? activeProvider.description}`);
 
     if (activeProvider.id === 'codex') {
       const codexSupportHint = containerEl.createDiv({ cls: 'claudian-provider-hint' });
@@ -165,12 +180,16 @@ export class ClaudianSettingTab extends PluginSettingTab {
       codexSupportHint.style.color = 'var(--text-warning)';
       codexSupportHint.style.marginTop = '-0.2em';
       codexSupportHint.style.marginBottom = '0.8em';
-      codexSupportHint.setText('Current Codex support: chat, inline edit, instruction mode, external directories, images, command/tool stream, AI title generation, Ask/Auto approvals, and CLI-managed model selection. MCP and Claude SDK slash commands are not wired yet.');
+      codexSupportHint.setText(isZhCN
+        ? '当前 Codex 已支持：聊天、行内编辑、指令优化、外部目录、图片输入、命令/工具流展示、AI 标题生成、Ask/Auto 权限模式，以及由 Codex CLI 管理模型。暂不支持 MCP 与 Claude SDK Slash Commands。'
+        : 'Current Codex support: chat, inline edit, instruction mode, external directories, images, command/tool stream, AI title generation, Ask/Auto approvals, and CLI-managed model selection. MCP and Claude SDK slash commands are not wired yet.');
     }
 
     new Setting(containerEl)
-      .setName('Codex model')
-      .setDesc('Optional model ID for Codex. Leave empty to let your local Codex CLI configuration choose the model.')
+      .setName(isZhCN ? 'Codex 模型' : 'Codex model')
+      .setDesc(isZhCN
+        ? '可选：为 Codex 指定模型 ID。留空时由你本地的 Codex CLI 配置决定模型。'
+        : 'Optional model ID for Codex. Leave empty to let your local Codex CLI configuration choose the model.')
       .addText((text) => {
         text
           .setPlaceholder('gpt-5.4')
@@ -714,7 +733,8 @@ export class ClaudianSettingTab extends PluginSettingTab {
   }
 
   private renderCliPathSettings(containerEl: HTMLElement): void {
-    new Setting(containerEl).setName('Runtime').setHeading();
+    const isZhCN = isSimplifiedChineseLocale(this.plugin.settings.locale);
+    new Setting(containerEl).setName(isZhCN ? '运行时' : 'Runtime').setHeading();
     this.createCliPathSetting(containerEl, {
       name: t('settings.cliPath.name'),
       description: `${t('settings.cliPath.desc')} ${process.platform === 'win32' ? t('settings.cliPath.descWindows') : t('settings.cliPath.descUnix')}`,
@@ -734,10 +754,14 @@ export class ClaudianSettingTab extends PluginSettingTab {
     });
 
     this.createCliPathSetting(containerEl, {
-      name: `Codex CLI path (${getHostnameKey()})`,
+      name: isZhCN ? `Codex CLI 路径（${getHostnameKey()}）` : `Codex CLI path (${getHostnameKey()})`,
       description: process.platform === 'win32'
-        ? 'Optional path for the Codex CLI. In PowerShell, run `Get-Command codex | Select-Object -ExpandProperty Source` and paste the full result here. Leave empty to auto-detect `codex` from PATH.'
-        : 'Optional path for the Codex CLI. Run `which codex` in your terminal and paste the full result here. Leave empty to auto-detect `codex` from PATH.',
+        ? (isZhCN
+          ? '可选：填写 Codex CLI 的完整路径。你可以先在 PowerShell 里运行 `Get-Command codex | Select-Object -ExpandProperty Source`，然后把结果粘贴到这里。留空时会尝试从 PATH 自动发现 `codex`。'
+          : 'Optional path for the Codex CLI. In PowerShell, run `Get-Command codex | Select-Object -ExpandProperty Source` and paste the full result here. Leave empty to auto-detect `codex` from PATH.')
+        : (isZhCN
+          ? '可选：填写 Codex CLI 的完整路径。你可以先在终端里运行 `which codex`，然后把结果粘贴到这里。留空时会尝试从 PATH 自动发现 `codex`。'
+          : 'Optional path for the Codex CLI. Run `which codex` in your terminal and paste the full result here. Leave empty to auto-detect `codex` from PATH.'),
       placeholder: process.platform === 'win32'
         ? 'C:\\Users\\you\\AppData\\Local\\Programs\\codex\\codex.exe'
         : '/usr/local/bin/codex',
