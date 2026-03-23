@@ -71,7 +71,7 @@ export class ClaudianView extends ItemView {
   }
 
   getDisplayText(): string {
-    return 'Claudian';
+    return 'Obsidian AI';
   }
 
   getIcon(): string {
@@ -246,7 +246,7 @@ export class ClaudianView extends ItemView {
     this.logoEl.appendChild(svg);
 
     // Title text (hidden in header mode when 2+ tabs)
-    this.titleTextEl = this.titleSlotEl.createEl('h4', { text: 'Claudian', cls: 'claudian-title-text' });
+    this.titleTextEl = this.titleSlotEl.createEl('h4', { text: 'Obsidian AI', cls: 'claudian-title-text' });
     this.providerBadgeEl = this.titleSlotEl.createSpan({ cls: 'claudian-provider-badge' });
     this.refreshProviderBadge();
 

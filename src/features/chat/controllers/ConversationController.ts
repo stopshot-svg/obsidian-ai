@@ -760,7 +760,7 @@ export class ConversationController {
       : (typeof this.deps.plugin.getActiveProviderId === 'function'
         ? this.deps.plugin.getActiveProviderId()
         : (this.deps.plugin.settings.provider ?? 'claude'));
-    const providerLabel = providerId === 'codex' ? 'Codex' : 'Claudian';
+    const providerLabel = providerId === 'codex' ? 'Codex' : 'Obsidian AI';
 
     // Helper to optionally personalize a greeting (with fallback for no-name case)
     const personalize = (base: string, noNameFallback?: string): string =>

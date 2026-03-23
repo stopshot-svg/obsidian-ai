@@ -47,7 +47,7 @@ describe('ClaudianPlugin', () => {
 
     mockManifest = {
       id: 'claudian',
-      name: 'Claudian',
+      name: 'Obsidian AI',
       version: '0.1.0',
     };
 
@@ -81,7 +81,7 @@ describe('ClaudianPlugin', () => {
 
       expect((plugin.addRibbonIcon as jest.Mock)).toHaveBeenCalledWith(
         'bot',
-        'Open Claudian',
+        'Open Obsidian AI',
         expect.any(Function)
       );
     });

@@ -1,29 +1,30 @@
-# Claudian
+# Obsidian AI
 
-![GitHub stars](https://img.shields.io/github/stars/YishenTu/claudian?style=social)
-![GitHub release](https://img.shields.io/github/v/release/YishenTu/claudian)
-![License](https://img.shields.io/github/license/YishenTu/claudian)
+![GitHub stars](https://img.shields.io/github/stars/stopshot-svg/obsidian-ai?style=social)
+![GitHub release](https://img.shields.io/github/v/release/stopshot-svg/obsidian-ai)
+![License](https://img.shields.io/github/license/stopshot-svg/obsidian-ai)
 
 ![Preview](Preview.png)
 
-An Obsidian plugin that embeds Claude Code as an AI collaborator in your vault. Your vault becomes Claude's working directory, giving it full agentic capabilities: file read/write, search, bash commands, and multi-step workflows.
+Obsidian AI is an Obsidian plugin that turns your vault into an AI workspace with switchable `Claude` and `Codex` providers. It keeps one consistent Obsidian UI while letting you chat, edit, search, and run agentic workflows inside your vault.
 
 > Experimental: this fork is adding a switchable `Codex` provider while keeping the same Obsidian UI. Claude remains the default runtime; Codex support is currently in progress.
 
 ## Features
 
-- **Full Agentic Capabilities**: Leverage Claude Code's power to read, write, and edit files, search, and execute bash commands, all within your Obsidian vault.
+- **Unified AI Workspace**: Use the same Obsidian UI with either `Claude` or `Codex` as the active provider.
+- **Full Agentic Capabilities**: Read, write, edit, search, and execute multi-step workflows directly inside your vault.
 - **Context-Aware**: Automatically attach the focused note, mention files with `@`, exclude notes by tag, include editor selection (Highlight), and access external directories for additional context.
 - **Vision Support**: Analyze images by sending them via drag-and-drop, paste, or file path.
 - **Inline Edit**: Edit selected text or insert content at cursor position directly in notes with word-level diff preview and read-only tool access for context.
 - **Instruction Mode (`#`)**: Add refined custom instructions to your system prompt directly from the chat input, with review/edit in a modal.
 - **Slash Commands**: Create reusable prompt templates triggered by `/command`, with argument placeholders, `@file` references, and optional inline bash substitutions.
-- **Skills**: Extend Claudian with reusable capability modules that are automatically invoked based on context, compatible with Claude Code's skill format.
+- **Skills**: Extend the workspace with reusable capability modules that are automatically invoked based on context.
 - **Custom Agents**: Define custom subagents that Claude can invoke, with support for tool restrictions and model overrides.
-- **Claude Code Plugins**: Enable Claude Code plugins installed via the CLI, with automatic discovery from `~/.claude/plugins` and per-vault configuration. Plugin skills, agents, and slash commands integrate seamlessly.
+- **Claude Compatibility Layer**: Preserve the mature Claudian/Claude workflows while adding Codex as a parallel provider.
 - **MCP Support**: Connect external tools and data sources via Model Context Protocol servers (stdio, SSE, HTTP) with context-saving mode and `@`-mention activation.
 - **Advanced Model Control**: Select between Haiku, Sonnet, and Opus, configure custom models via environment variables, fine-tune thinking budget, and enable Opus and Sonnet with 1M context window (requires Max subscription or extra usage).
-- **Plan Mode**: Toggle plan mode via Shift+Tab in the chat input. Claudian explores and designs before implementing, presenting a plan for approval with options to approve in a new session, continue in the current session, or provide feedback.
+- **Plan Mode**: Toggle plan mode via Shift+Tab in the chat input. Obsidian AI can explore and design before implementing, presenting a plan for approval with options to approve in a new session, continue in the current session, or provide feedback.
 - **Security**: Permission modes (YOLO/Safe/Plan), safety blocklist, and vault confinement with symlink-safe checks.
 - **Claude in Chrome**: Allow Claude to interact with Chrome through the `claude-in-chrome` extension.
 - **Provider Switching (Experimental)**: Switch between `Claude` and `Codex` from Settings while keeping the same chat UI and session chrome.
@@ -40,14 +41,14 @@ An Obsidian plugin that embeds Claude Code as an AI collaborator in your vault. 
 
 ### From GitHub Release (recommended)
 
-1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/YishenTu/claudian/releases/latest)
+1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/stopshot-svg/obsidian-ai/releases/latest)
 2. Create a folder called `claudian` in your vault's plugins folder:
    ```
    /path/to/vault/.obsidian/plugins/claudian/
    ```
 3. Copy the downloaded files into the `claudian` folder
 4. Enable the plugin in Obsidian:
-   - Settings → Community plugins → Enable "Claudian"
+   - Settings → Community plugins → Enable "Obsidian AI"
 
 ### Using BRAT
 
@@ -56,9 +57,9 @@ An Obsidian plugin that embeds Claude Code as an AI collaborator in your vault. 
 1. Install the BRAT plugin from Obsidian Community Plugins
 2. Enable BRAT in Settings → Community plugins
 3. Open BRAT settings and click "Add Beta plugin"
-4. Enter the repository URL: `https://github.com/YishenTu/claudian`
-5. Click "Add Plugin" and BRAT will install Claudian automatically
-6. Enable Claudian in Settings → Community plugins
+4. Enter the repository URL: `https://github.com/stopshot-svg/obsidian-ai`
+5. Click "Add Plugin" and BRAT will install Obsidian AI automatically
+6. Enable Obsidian AI in Settings → Community plugins
 
 > **Tip**: BRAT will automatically check for updates and notify you when a new version is available.
 
@@ -67,8 +68,8 @@ An Obsidian plugin that embeds Claude Code as an AI collaborator in your vault. 
 1. Clone this repository into your vault's plugins folder:
    ```bash
    cd /path/to/vault/.obsidian/plugins
-   git clone https://github.com/YishenTu/claudian.git
-   cd claudian
+   git clone https://github.com/stopshot-svg/obsidian-ai.git
+   cd obsidian-ai
    ```
 
 2. Install dependencies and build:
@@ -78,7 +79,7 @@ An Obsidian plugin that embeds Claude Code as an AI collaborator in your vault. 
    ```
 
 3. Enable the plugin in Obsidian:
-   - Settings → Community plugins → Enable "Claudian"
+   - Settings → Community plugins → Enable "Obsidian AI"
 
 ### Development
 
@@ -98,7 +99,7 @@ npm run build
 1. Click the bot icon in ribbon or use command palette to open chat
 2. Select text + hotkey for inline edit
 
-Use it like Claude Code—read, write, edit, search files in your vault.
+Use it like an AI coding workspace inside Obsidian—read, write, edit, and search files in your vault with either provider.
 
 ### Context
 
@@ -120,9 +121,9 @@ Use it like Claude Code—read, write, edit, search files in your vault.
 - **Inline Edit**: Select text + hotkey to edit directly in notes with word-level diff preview
 - **Instruction Mode**: Type `#` to add refined instructions to system prompt
 - **Slash Commands**: Type `/` for custom prompt templates or skills
-- **Skills**: Add `skill/SKILL.md` files to `~/.claude/skills/` or `{vault}/.claude/skills/`, recommended to use Claude Code to manage skills
-- **Custom Agents**: Add `agent.md` files to `~/.claude/agents/` (global) or `{vault}/.claude/agents/` (vault-specific); select via `@Agents/` in chat, or prompt Claudian to invoke agents
-- **Claude Code Plugins**: Enable plugins via Settings → Claude Code Plugins, recommended to use Claude Code to manage plugins
+- **Skills**: Add `skill/SKILL.md` files to `~/.claude/skills/` or `{vault}/.claude/skills/`
+- **Custom Agents**: Add `agent.md` files to `~/.claude/agents/` (global) or `{vault}/.claude/agents/` (vault-specific); select via `@Agents/` in chat
+- **Claude Code Plugins**: Enable plugins via Settings → Claude Code Plugins for Claude-provider workflows
 - **MCP**: Add external tools via Settings → MCP Servers; use `@mcp-server` in chat to activate
 
 ## Configuration
@@ -194,7 +195,7 @@ Use it like Claude Code—read, write, edit, search files in your vault.
 
 If you encounter `spawn claude ENOENT` or `Claude CLI not found`, the plugin can't auto-detect your Claude installation. Common with Node version managers (nvm, fnm, volta).
 
-**Solution**: Find your CLI path and set it in Settings → Advanced → Claude CLI path.
+**Solution**: Find your CLI path and set it in Settings → Runtime → Claude CLI path.
 
 | Platform | Command | Example Path |
 |----------|---------|--------------|
@@ -220,7 +221,7 @@ If different, GUI apps like Obsidian may not find Node.js.
 1. Install native binary (recommended)
 2. Add Node.js path to Settings → Environment: `PATH=/path/to/node/bin`
 
-**Still having issues?** [Open a GitHub issue](https://github.com/YishenTu/claudian/issues) with your platform, CLI path, and error message.
+**Still having issues?** [Open a GitHub issue](https://github.com/stopshot-svg/obsidian-ai/issues) with your platform, CLI path, and error message.
 
 ## Architecture
 
@@ -266,7 +267,7 @@ src/
 - [x] `!command` support
 - [x] Tool renderers refinement
 - [x] 1M Opus and Sonnet models
-- [ ] Codex SDK integration
+- [x] Codex provider integration
 - [ ] Hooks and other advanced features
 - [ ] More to come!
 
@@ -276,11 +277,11 @@ Licensed under the [MIT License](LICENSE).
 
 ## Star History
 
-<a href="https://www.star-history.com/?repos=YishenTu%2Fclaudian&type=date&legend=top-left">
+<a href="https://www.star-history.com/?repos=stopshot-svg%2Fobsidian-ai&type=date&legend=top-left">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=YishenTu/claudian&type=date&legend=top-left&theme=dark" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=YishenTu/claudian&type=date&legend=top-left" />
-    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=YishenTu/claudian&type=date&legend=top-left" />
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=stopshot-svg/obsidian-ai&type=date&legend=top-left&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=stopshot-svg/obsidian-ai&type=date&legend=top-left" />
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=stopshot-svg/obsidian-ai&type=date&legend=top-left" />
   </picture>
 </a>
 
