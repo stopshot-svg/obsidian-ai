@@ -72,6 +72,9 @@ const context = await esbuild.context({
   sourcemap: prod ? false : 'inline',
   treeShaking: true,
   outfile: 'main.js',
+  footer: {
+    js: 'module.exports = module.exports.default ?? module.exports;',
+  },
 });
 
 if (prod) {
