@@ -472,8 +472,9 @@ export class ConversationController {
 
     // Check if this is a native session and promote legacy sessions after first SDK session capture
     const conversation = await plugin.getConversationById(state.currentConversationId!);
+    const conversationProvider = conversation?.provider ?? plugin.getEffectiveProviderId?.() ?? plugin.getActiveProviderId?.() ?? plugin.settings.provider ?? 'claude';
     const wasNative = conversation?.isNative ?? false;
-    const shouldPromote = !wasNative && !!sessionId;
+    const shouldPromote = conversationProvider !== 'codex' && !wasNative && !!sessionId;
     const isNative = wasNative || shouldPromote;
     const legacyMessages = conversation?.messages ?? [];
     const legacyCutoffAt = shouldPromote
@@ -508,11 +509,13 @@ export class ConversationController {
     const updates: Partial<Conversation> = {
       messages: isNative ? state.messages : state.getPersistedMessages(),
       sessionId: resolvedSessionId,
-      sdkSessionId: isNative && sessionId && !isForkSourceOnly ? sessionId : conversation?.sdkSessionId,
-      previousSdkSessionIds,
+      sdkSessionId: (conversationProvider !== 'codex' && isNative && sessionId && !isForkSourceOnly)
+        ? sessionId
+        : (conversationProvider !== 'codex' ? conversation?.sdkSessionId : undefined),
+      previousSdkSessionIds: conversationProvider !== 'codex' ? previousSdkSessionIds : undefined,
       isNative: isNative || undefined,
       legacyCutoffAt,
-      sdkMessagesLoaded: isNative ? true : undefined,
+      sdkMessagesLoaded: (conversationProvider !== 'codex' && isNative) ? true : undefined,
       currentNote: currentNote,
       externalContextPaths: externalContextPaths.length > 0 ? externalContextPaths : undefined,
       usage: state.usage ?? undefined,

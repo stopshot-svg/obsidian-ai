@@ -427,6 +427,7 @@ describe('ClaudianPlugin', () => {
 
       const conv = await plugin.createConversation(undefined, 'codex');
       expect(conv.isNative).toBe(false);
+      expect(conv.sdkSessionId).toBeUndefined();
       const list = plugin.getConversationList();
       const entry = list.find((item) => item.id === conv.id);
 
@@ -519,6 +520,19 @@ describe('ClaudianPlugin', () => {
 
       expect(saveJsonlSpy).toHaveBeenCalled();
       expect(saveMetaSpy).not.toHaveBeenCalled();
+    });
+
+    it('does not promote codex conversations to sdk-native when sessionId appears', async () => {
+      await plugin.onload();
+
+      const conv = await plugin.createConversation(undefined, 'codex');
+      await plugin.updateConversation(conv.id, {
+        sessionId: 'codex-thread-1',
+      });
+
+      const updated = await plugin.getConversationById(conv.id);
+      expect(updated?.isNative).toBe(false);
+      expect(updated?.sdkSessionId).toBeUndefined();
     });
   });
 

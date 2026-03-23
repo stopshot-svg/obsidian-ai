@@ -1046,12 +1046,13 @@ export default class ClaudianPlugin extends Plugin {
   /**
    * Creates a new conversation and sets it as active.
    *
-   * New conversations always use SDK-native storage.
-   * The session ID may be captured after the first SDK response.
+   * Claude conversations start as SDK-native storage.
+   * Codex conversations use JSONL storage.
    */
   async createConversation(sessionId?: string, providerId?: ProviderId): Promise<Conversation> {
     const conversationId = sessionId ?? this.generateConversationId();
     const effectiveProvider = providerId ?? this.getEffectiveProviderId();
+    const isNative = effectiveProvider !== 'codex';
     const conversation: Conversation = {
       id: conversationId,
       provider: effectiveProvider,
@@ -1059,9 +1060,9 @@ export default class ClaudianPlugin extends Plugin {
       createdAt: Date.now(),
       updatedAt: Date.now(),
       sessionId: sessionId ?? null,
-      sdkSessionId: sessionId ?? undefined,
+      sdkSessionId: isNative ? (sessionId ?? undefined) : undefined,
       messages: [],
-      isNative: effectiveProvider !== 'codex',
+      isNative,
     };
 
     this.conversations.unshift(conversation);
