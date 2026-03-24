@@ -1,4 +1,5 @@
 import * as fs from 'fs/promises';
+import * as os from 'os';
 
 import {
   resolveProviderMcpServers,
@@ -8,13 +9,16 @@ import {
 
 describe('providerMcp', () => {
   const vaultPath = '/tmp/claudian-provider-mcp-tests';
+  const codexHomePath = `${os.homedir()}/.codex`;
 
   beforeEach(async () => {
     await fs.rm(vaultPath, { recursive: true, force: true });
+    await fs.rm(codexHomePath, { recursive: true, force: true });
   });
 
   afterAll(async () => {
     await fs.rm(vaultPath, { recursive: true, force: true });
+    await fs.rm(codexHomePath, { recursive: true, force: true });
   });
 
   it('combines mentions and enabled servers before resolving active servers', () => {
@@ -36,6 +40,14 @@ describe('providerMcp', () => {
   });
 
   it('writes Codex project config in TOML format', async () => {
+    await fs.mkdir(codexHomePath, { recursive: true });
+    await fs.writeFile(
+      `${codexHomePath}/config.toml`,
+      'model = "gpt-5"\n# BEGIN Obsidian AI MCP\n[mcp_servers.old]\ncommand = "old"\n# END Obsidian AI MCP\n',
+      'utf8'
+    );
+    await fs.writeFile(`${codexHomePath}/auth.json`, '{"token":"secret"}\n', 'utf8');
+
     const codexHome = await writeCodexProjectMcpConfig(vaultPath, {
       'stdio-server': {
         command: 'npx',
@@ -47,10 +59,12 @@ describe('providerMcp', () => {
         url: 'https://example.com/mcp',
         headers: { Authorization: 'Bearer token' },
       },
-    });
+    }, '');
 
     expect(codexHome).toBe(`${vaultPath}/.claude/provider-mcp/codex`);
+    expect(await fs.readFile(`${codexHome}/auth.json`, 'utf8')).toContain('"token":"secret"');
     const content = await fs.readFile(`${codexHome}/config.toml`, 'utf8');
+    expect(content).toContain('model = "gpt-5"');
     expect(content).toContain('[mcp_servers.stdio-server]');
     expect(content).toContain('command = "npx"');
     expect(content).toContain('args = ["-y", "@modelcontextprotocol/server-filesystem"]');
@@ -60,6 +74,7 @@ describe('providerMcp', () => {
     expect(content).toContain('url = "https://example.com/mcp"');
     expect(content).toContain('transport = "http"');
     expect(content).toContain('[mcp_servers.http-server.headers]');
+    expect(content).not.toContain('[mcp_servers.old]');
   });
 
   it('merges Gemini MCP settings without dropping unrelated config', async () => {

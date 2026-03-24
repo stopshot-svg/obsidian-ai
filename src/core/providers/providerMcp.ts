@@ -1,12 +1,16 @@
 import * as fs from 'fs/promises';
+import * as os from 'os';
 import * as path from 'path';
 
+import { parseEnvironmentVariables } from '../../utils/env';
 import type { QueryOptions } from '../agent';
 import type { McpServerManager } from '../mcp';
 import type { McpServerConfig } from '../types';
 
 const CODEX_CONFIG_DIR = path.join('.claude', 'provider-mcp', 'codex');
 const CODEX_CONFIG_PATH = path.join(CODEX_CONFIG_DIR, 'config.toml');
+const CODEX_MANAGED_BLOCK_START = '# BEGIN Obsidian AI MCP';
+const CODEX_MANAGED_BLOCK_END = '# END Obsidian AI MCP';
 const GEMINI_CONFIG_DIR = '.gemini';
 const GEMINI_CONFIG_PATH = path.join(GEMINI_CONFIG_DIR, 'settings.json');
 const GEMINI_MANAGED_SERVERS_KEY = '_claudianManagedMcpServers';
@@ -28,11 +32,20 @@ export function resolveProviderMcpServers(
 
 export async function writeCodexProjectMcpConfig(
   vaultPath: string,
-  servers: Record<string, McpServerConfig>
+  servers: Record<string, McpServerConfig>,
+  envText: string
 ): Promise<string> {
   const codexHome = path.join(vaultPath, CODEX_CONFIG_DIR);
+  const sourceCodexHome = resolveOfficialCodexHome(envText);
+
+  await fs.rm(codexHome, { recursive: true, force: true });
   await fs.mkdir(codexHome, { recursive: true });
-  await fs.writeFile(path.join(vaultPath, CODEX_CONFIG_PATH), serializeCodexMcpConfig(servers), 'utf8');
+  await copyCodexHome(sourceCodexHome, codexHome);
+
+  const configPath = path.join(vaultPath, CODEX_CONFIG_PATH);
+  const existingConfig = await readExistingCodexConfig(configPath);
+  const mergedConfig = mergeCodexManagedBlock(existingConfig, serializeCodexMcpConfig(servers));
+  await fs.writeFile(configPath, mergedConfig, 'utf8');
   return codexHome;
 }
 
@@ -103,7 +116,16 @@ function serializeCodexMcpConfig(servers: Record<string, McpServerConfig>): stri
     lines.push('');
   }
 
-  return lines.length > 0 ? `${lines.join('\n').trimEnd()}\n` : '';
+  if (lines.length === 0) {
+    return '';
+  }
+
+  return [
+    CODEX_MANAGED_BLOCK_START,
+    lines.join('\n').trimEnd(),
+    CODEX_MANAGED_BLOCK_END,
+    '',
+  ].join('\n');
 }
 
 function toGeminiMcpConfig(config: McpServerConfig): Record<string, unknown> {
@@ -170,4 +192,57 @@ function quoteTomlString(value: string): string {
 
 function formatTomlStringArray(values: string[]): string {
   return `[${values.map((value) => quoteTomlString(value)).join(', ')}]`;
+}
+
+function resolveOfficialCodexHome(envText: string): string {
+  const customEnv = parseEnvironmentVariables(envText || '');
+  return customEnv.CODEX_HOME?.trim() || path.join(os.homedir(), '.codex');
+}
+
+async function copyCodexHome(sourceDir: string, targetDir: string): Promise<void> {
+  try {
+    await fs.cp(sourceDir, targetDir, {
+      recursive: true,
+      force: true,
+      errorOnExist: false,
+    });
+  } catch (error) {
+    const nodeError = error as NodeJS.ErrnoException;
+    if (nodeError.code === 'ENOENT') {
+      return;
+    }
+    throw error;
+  }
+}
+
+async function readExistingCodexConfig(configPath: string): Promise<string> {
+  try {
+    return await fs.readFile(configPath, 'utf8');
+  } catch (error) {
+    const nodeError = error as NodeJS.ErrnoException;
+    if (nodeError.code === 'ENOENT') {
+      return '';
+    }
+    throw error;
+  }
+}
+
+function mergeCodexManagedBlock(existingConfig: string, managedBlock: string): string {
+  const stripped = existingConfig
+    .replace(new RegExp(`\\n?${escapeRegExp(CODEX_MANAGED_BLOCK_START)}[\\s\\S]*?${escapeRegExp(CODEX_MANAGED_BLOCK_END)}\\n?`, 'g'), '')
+    .trimEnd();
+
+  if (!managedBlock.trim()) {
+    return stripped ? `${stripped}\n` : '';
+  }
+
+  if (!stripped) {
+    return managedBlock;
+  }
+
+  return `${stripped}\n\n${managedBlock}`;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

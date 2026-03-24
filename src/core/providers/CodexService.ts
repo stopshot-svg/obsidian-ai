@@ -93,7 +93,11 @@ export class CodexService extends ClaudianService {
     }
 
     const activeMcpServers = resolveProviderMcpServers(this.codexMcpManager, queryOptions);
-    const codexHome = await writeCodexProjectMcpConfig(vaultPath, activeMcpServers);
+    const codexHome = await writeCodexProjectMcpConfig(
+      vaultPath,
+      activeMcpServers,
+      this.codexPlugin.getActiveEnvironmentVariables()
+    );
 
     const commandArgs: string[] = [
       'exec',
