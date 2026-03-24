@@ -66,7 +66,7 @@ export class GeminiService extends ClaudianService {
     const activeMcpServers = resolveProviderMcpServers(this.geminiMcpManager, queryOptions);
     await writeGeminiProjectMcpConfig(vaultPath, activeMcpServers);
 
-    const commandArgs: string[] = ['-p', prompt, '--output-format', 'stream-json'];
+    const commandArgs: string[] = ['--output-format', 'stream-json'];
     const selectedModel = queryOptions?.model?.trim() || this.geminiPlugin.settings.geminiModel?.trim();
     if (selectedModel) {
       commandArgs.push('--model', selectedModel);
@@ -96,6 +96,8 @@ export class GeminiService extends ClaudianService {
         commandArgs.push('--approval-mode', 'default');
         break;
     }
+
+    commandArgs.push(prompt);
 
     const spawnSpec = createGeminiSpawnSpec(resolvedGeminiPath, commandArgs, {
       cwd: vaultPath,
@@ -135,9 +137,9 @@ export class GeminiService extends ClaudianService {
         }
       }
 
-      if (spawnError) {
-        throw spawnError;
-      }
+    if (spawnError) {
+      throw spawnError;
+    }
 
       const { code, signal } = await exitPromise;
       if (code !== 0 || signal) {

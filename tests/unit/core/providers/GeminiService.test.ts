@@ -50,7 +50,7 @@ describe('GeminiService', () => {
     await fs.rm('/tmp/vault/.gemini', { recursive: true, force: true });
   });
 
-  it('does not pass --sandbox by default for Gemini', async () => {
+  it('does not pass --sandbox and uses a positional prompt for Gemini', async () => {
     const { spawn } = jest.requireMock('child_process') as { spawn: jest.Mock };
     const child = new FakeChildProcess();
     spawn.mockReturnValue(child);
@@ -77,6 +77,9 @@ describe('GeminiService', () => {
 
     const args = spawn.mock.calls[0][1] as string[];
     expect(args).not.toContain('--sandbox');
+    expect(args).not.toContain('-p');
+    expect(args[0]).toBe('--output-format');
+    expect(args.at(-1)).toBe('hello');
 
     const fs = await import('fs/promises');
     const settings = JSON.parse(await fs.readFile('/tmp/vault/.gemini/settings.json', 'utf8'));
