@@ -21,7 +21,7 @@ class FakeChildProcess extends EventEmitter {
 }
 
 describe('CodexService', () => {
-  const createService = () => {
+  const createService = (mcpManager?: { getActiveServers: jest.Mock }) => {
     const plugin = {
       app: {
         vault: {
@@ -40,11 +40,15 @@ describe('CodexService', () => {
       getActiveEnvironmentVariables: jest.fn().mockReturnValue(''),
     } as any;
 
-    return new CodexService(plugin, {} as any);
+    return new CodexService(plugin, mcpManager as any ?? { getActiveServers: jest.fn().mockReturnValue({}) });
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterEach(async () => {
+    await fs.rm('/tmp/vault/.codex', { recursive: true, force: true });
   });
 
   it('maps thread.started to session capture without UI chunks', () => {
@@ -132,8 +136,13 @@ describe('CodexService', () => {
     const { spawn } = jest.requireMock('child_process') as { spawn: jest.Mock };
     const child = new FakeChildProcess();
     spawn.mockReturnValue(child);
+    const mcpManager = {
+      getActiveServers: jest.fn().mockReturnValue({
+        docs: { command: 'npx', args: ['docs-mcp'] },
+      }),
+    };
 
-    const service = createService();
+    const service = createService(mcpManager);
 
     setImmediate(() => {
       child.stdout.write(JSON.stringify({ type: 'turn.completed', usage: {} }) + '\n');
@@ -142,20 +151,20 @@ describe('CodexService', () => {
       child.emit('exit', 0, null);
     });
 
-    const chunks: unknown[] = [];
-    for await (const chunk of service.query(
+    const iterator = service.query(
       'hello',
       undefined,
       undefined,
       {
         model: 'gpt-5-codex',
         externalContextPaths: ['/tmp/project-a', '/tmp/project-b'],
+        enabledMcpServers: new Set(['docs']),
       }
-    )) {
-      chunks.push(chunk);
-    }
+    );
 
-    expect(chunks).toContainEqual({ type: 'done' });
+    expect((await iterator.next()).value).toMatchObject({ type: 'usage' });
+    expect((await iterator.next()).value).toEqual({ type: 'done' });
+    await iterator.return(undefined);
     expect(spawn).toHaveBeenCalled();
     const args = spawn.mock.calls[0][1] as string[];
     expect(args).toContain('--model');
@@ -167,6 +176,11 @@ describe('CodexService', () => {
     expect(args).toContain('--add-dir');
     expect(args).toContain('/tmp/project-a');
     expect(args).toContain('/tmp/project-b');
+    expect(spawn.mock.calls[0][2]?.env?.CODEX_HOME).toBe('/tmp/vault/.claude/provider-mcp/codex');
+
+    const config = await fs.readFile('/tmp/vault/.claude/provider-mcp/codex/config.toml', 'utf8');
+    expect(config).toContain('[mcp_servers.docs]');
+    expect(config).toContain('command = "npx"');
   });
 
   it('falls back to codexModel setting when queryOptions.model is absent', async () => {
@@ -184,9 +198,10 @@ describe('CodexService', () => {
       child.emit('exit', 0, null);
     });
 
-    for await (const chunk of service.query('hello')) {
-      expect(chunk).toBeDefined();
-    }
+    const iterator = service.query('hello');
+    await iterator.next();
+    await iterator.next();
+    await iterator.return(undefined);
 
     const args = spawn.mock.calls[0][1] as string[];
     expect(args).toContain('--model');
@@ -208,9 +223,10 @@ describe('CodexService', () => {
       child.emit('exit', 0, null);
     });
 
-    for await (const chunk of service.query('hello')) {
-      expect(chunk).toBeDefined();
-    }
+    const iterator = service.query('hello');
+    await iterator.next();
+    await iterator.next();
+    await iterator.return(undefined);
 
     const args = spawn.mock.calls[0][1] as string[];
     expect(args).toContain('--sandbox');

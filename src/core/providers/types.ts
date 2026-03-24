@@ -40,7 +40,7 @@ export const PROVIDER_DESCRIPTORS: Record<ProviderId, ProviderDescriptor> = {
     capabilities: {
       inlineEdit: true,
       instructionRefine: true,
-      mcp: false,
+      mcp: true,
       persistentConversation: false,
       slashCommands: false,
       titleGeneration: true,
@@ -54,7 +54,7 @@ export const PROVIDER_DESCRIPTORS: Record<ProviderId, ProviderDescriptor> = {
     capabilities: {
       inlineEdit: false,
       instructionRefine: false,
-      mcp: false,
+      mcp: true,
       persistentConversation: true,
       slashCommands: false,
       titleGeneration: false,

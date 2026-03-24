@@ -8,6 +8,7 @@ import { getVaultPath } from '../../utils/path';
 import { ClaudianService, type QueryOptions } from '../agent';
 import type { McpServerManager } from '../mcp';
 import type { ChatMessage, ImageAttachment, StreamChunk } from '../types';
+import { resolveProviderMcpServers, writeGeminiProjectMcpConfig } from './providerMcp';
 
 type GeminiStreamEvent =
   | { type: 'init'; session_id?: string; model?: string }
@@ -17,18 +18,20 @@ type GeminiStreamEvent =
   | { type: 'result'; status?: 'success' | 'error'; error?: { message?: string } }
   | { type: 'error'; message?: string; severity?: string };
 
-function stripAnsi(text: string): string {
+export function stripAnsi(text: string): string {
   const ansiPattern = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, 'g');
   return text.replace(ansiPattern, '');
 }
 
 export class GeminiService extends ClaudianService {
   private readonly geminiPlugin: ClaudianPlugin;
+  private readonly geminiMcpManager: McpServerManager;
   private runningProcess: ChildProcessWithoutNullStreams | null = null;
 
   constructor(plugin: ClaudianPlugin, mcpManager: McpServerManager) {
     super(plugin, mcpManager);
     this.geminiPlugin = plugin;
+    this.geminiMcpManager = mcpManager;
   }
 
   isReady(): boolean {
@@ -59,6 +62,9 @@ export class GeminiService extends ClaudianService {
       yield { type: 'error', content: 'Could not determine vault path' };
       return;
     }
+
+    const activeMcpServers = resolveProviderMcpServers(this.geminiMcpManager, queryOptions);
+    await writeGeminiProjectMcpConfig(vaultPath, activeMcpServers);
 
     const commandArgs: string[] = ['-p', prompt, '--output-format', 'stream-json'];
     const selectedModel = queryOptions?.model?.trim() || this.geminiPlugin.settings.geminiModel?.trim();

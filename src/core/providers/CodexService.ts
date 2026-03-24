@@ -12,6 +12,7 @@ import { ClaudianService, type QueryOptions } from '../agent';
 import type { McpServerManager } from '../mcp';
 import { TOOL_BASH } from '../tools/toolNames';
 import type { ChatMessage, ImageAttachment, StreamChunk } from '../types';
+import { resolveProviderMcpServers, writeCodexProjectMcpConfig } from './providerMcp';
 
 type CodexThreadEvent =
   | { type: 'thread.started'; thread_id: string }
@@ -53,11 +54,13 @@ type CodexThreadEvent =
  */
 export class CodexService extends ClaudianService {
   private readonly codexPlugin: ClaudianPlugin;
+  private readonly codexMcpManager: McpServerManager;
   private runningProcess: ChildProcessWithoutNullStreams | null = null;
 
   constructor(plugin: ClaudianPlugin, mcpManager: McpServerManager) {
     super(plugin, mcpManager);
     this.codexPlugin = plugin;
+    this.codexMcpManager = mcpManager;
   }
 
   isReady(): boolean {
@@ -88,6 +91,9 @@ export class CodexService extends ClaudianService {
       yield { type: 'error', content: 'Could not determine vault path' };
       return;
     }
+
+    const activeMcpServers = resolveProviderMcpServers(this.codexMcpManager, queryOptions);
+    const codexHome = await writeCodexProjectMcpConfig(vaultPath, activeMcpServers);
 
     const commandArgs: string[] = [
       'exec',
@@ -131,7 +137,7 @@ export class CodexService extends ClaudianService {
       }
     }
 
-    const env = this.buildExecEnv();
+    const env = this.buildExecEnv(codexHome);
     const spawnSpec = createCodexSpawnSpec(resolvedCodexPath, commandArgs, {
       cwd: vaultPath,
       env,
@@ -225,13 +231,14 @@ export class CodexService extends ClaudianService {
     super.cleanup();
   }
 
-  private buildExecEnv(): NodeJS.ProcessEnv {
+  private buildExecEnv(codexHome: string): NodeJS.ProcessEnv {
     const env: NodeJS.ProcessEnv = { ...process.env };
     const customEnv = parseEnvironmentVariables(this.codexPlugin.getActiveEnvironmentVariables());
     for (const [key, value] of Object.entries(customEnv)) {
       env[key] = value;
     }
     env.GIT_TERMINAL_PROMPT = '0';
+    env.CODEX_HOME = codexHome;
     return env;
   }
 

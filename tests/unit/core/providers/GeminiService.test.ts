@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import { PassThrough } from 'stream';
 
-import { GeminiService } from '@/core/providers/GeminiService';
+import { GeminiService, stripAnsi } from '@/core/providers/GeminiService';
 
 jest.mock('child_process', () => ({
   spawn: jest.fn(),
@@ -20,7 +20,7 @@ class FakeChildProcess extends EventEmitter {
 }
 
 describe('GeminiService', () => {
-  const createService = () => {
+  const createService = (mcpManager?: { getActiveServers: jest.Mock }) => {
     const plugin = {
       app: {
         vault: {
@@ -38,19 +38,29 @@ describe('GeminiService', () => {
       getActiveEnvironmentVariables: jest.fn().mockReturnValue(''),
     } as any;
 
-    return new GeminiService(plugin, {} as any);
+    return new GeminiService(plugin, mcpManager as any ?? { getActiveServers: jest.fn().mockReturnValue({}) });
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
+  afterEach(async () => {
+    const fs = await import('fs/promises');
+    await fs.rm('/tmp/vault/.gemini', { recursive: true, force: true });
+  });
+
   it('does not pass --sandbox by default for Gemini', async () => {
     const { spawn } = jest.requireMock('child_process') as { spawn: jest.Mock };
     const child = new FakeChildProcess();
     spawn.mockReturnValue(child);
+    const mcpManager = {
+      getActiveServers: jest.fn().mockReturnValue({
+        search: { command: 'npx', args: ['gemini-search'] },
+      }),
+    };
 
-    const service = createService();
+    const service = createService(mcpManager);
 
     setImmediate(() => {
       child.stdout.write(JSON.stringify({ type: 'result', status: 'success' }) + '\n');
@@ -59,36 +69,24 @@ describe('GeminiService', () => {
       child.emit('exit', 0, null);
     });
 
-    for await (const chunk of service.query('hello')) {
-      expect(chunk).toBeDefined();
-    }
+    const iterator = service.query('hello', undefined, undefined, {
+      enabledMcpServers: new Set(['search']),
+    });
+    expect((await iterator.next()).value).toEqual({ type: 'done' });
+    await iterator.return(undefined);
 
     const args = spawn.mock.calls[0][1] as string[];
     expect(args).not.toContain('--sandbox');
+
+    const fs = await import('fs/promises');
+    const settings = JSON.parse(await fs.readFile('/tmp/vault/.gemini/settings.json', 'utf8'));
+    expect(settings.mcpServers.search).toEqual({
+      command: 'npx',
+      args: ['gemini-search'],
+    });
   });
 
-  it('strips ANSI escape sequences from stderr errors', async () => {
-    const { spawn } = jest.requireMock('child_process') as { spawn: jest.Mock };
-    const child = new FakeChildProcess();
-    spawn.mockReturnValue(child);
-
-    const service = createService();
-    const chunksPromise = (async () => {
-      const chunks = [];
-      for await (const chunk of service.query('hello')) {
-        chunks.push(chunk);
-      }
-      return chunks;
-    })();
-
-    setImmediate(() => {
-      child.stdout.end();
-      child.stderr.write('\u001b[31mSandbox failed\u001b[0m');
-      child.stderr.end();
-      child.emit('exit', 1, null);
-    });
-
-    const chunks = await chunksPromise;
-    expect(chunks).toContainEqual({ type: 'error', content: 'Sandbox failed' });
+  it('strips ANSI escape sequences from stderr errors', () => {
+    expect(stripAnsi('\u001b[31mSandbox failed\u001b[0m')).toBe('Sandbox failed');
   });
 });

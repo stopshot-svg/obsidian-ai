@@ -204,8 +204,8 @@ export class ClaudianSettingTab extends PluginSettingTab {
       codexSupportHint.style.marginTop = '-0.2em';
       codexSupportHint.style.marginBottom = '0.8em';
       codexSupportHint.setText(isZhCN
-        ? '当前 Codex 已支持：聊天、行内编辑、指令优化、外部目录、图片输入、命令/工具流展示、AI 标题生成、Ask/Auto 权限模式，以及由 Codex CLI 管理模型。暂不支持 MCP 与 Claude SDK Slash Commands。'
-        : 'Current Codex support: chat, inline edit, instruction mode, external directories, images, command/tool stream, AI title generation, Ask/Auto approvals, and CLI-managed model selection. MCP and Claude SDK slash commands are not wired yet.');
+        ? '当前 Codex 已支持：聊天、行内编辑、指令优化、外部目录、图片输入、命令/工具流展示、AI 标题生成、Ask/Auto 权限模式、MCP，以及由 Codex CLI 管理模型。MCP 会写入插件隔离目录 `.claude/provider-mcp/codex/config.toml`，不会改写你自己的 `.codex/config.toml`。Claude SDK Slash Commands 仍未接线。'
+        : 'Current Codex support: chat, inline edit, instruction mode, external directories, images, command/tool stream, AI title generation, Ask/Auto approvals, MCP, and CLI-managed model selection. MCP is written to the isolated plugin directory `.claude/provider-mcp/codex/config.toml`, so it does not rewrite your own `.codex/config.toml`. Claude SDK slash commands are still not wired.');
     }
     if (activeProvider.id === 'gemini') {
       const geminiSupportHint = containerEl.createDiv({ cls: 'claudian-provider-hint' });
@@ -214,8 +214,8 @@ export class ClaudianSettingTab extends PluginSettingTab {
       geminiSupportHint.style.marginTop = '-0.2em';
       geminiSupportHint.style.marginBottom = '0.8em';
       geminiSupportHint.setText(isZhCN
-        ? '当前 Gemini 已支持：聊天、Ask/Auto 权限模式、CLI 管理模型、会话恢复、外部目录。插件当前不会自动启用 Gemini CLI 的 sandbox（避免普通机器缺少 Docker / Podman 时直接报错）。暂不支持 MCP、行内编辑、指令优化与 Claude SDK Slash Commands。'
-        : 'Current Gemini support: chat, Ask/Auto approvals, CLI-managed model selection, session resume, and external directories. The plugin currently does not auto-enable Gemini CLI sandboxing, which avoids hard failures on machines without Docker or Podman. MCP, inline edit, instruction refinement, and Claude SDK slash commands are not wired yet.');
+        ? '当前 Gemini 已支持：聊天、Ask/Auto 权限模式、CLI 管理模型、会话恢复、外部目录、MCP。MCP 会投影到项目内 `.gemini/settings.json`，不会影响 Claude 或你全局的 Gemini 配置。插件当前不会自动启用 Gemini CLI 的 sandbox（避免普通机器缺少 Docker / Podman 时直接报错）。行内编辑、指令优化与 Claude SDK Slash Commands 仍未接线。'
+        : 'Current Gemini support: chat, Ask/Auto approvals, CLI-managed model selection, session resume, external directories, and MCP. MCP is projected into project-local `.gemini/settings.json`, so it does not affect Claude or your global Gemini configuration. The plugin currently does not auto-enable Gemini CLI sandboxing, which avoids hard failures on machines without Docker or Podman. Inline edit, instruction refinement, and Claude SDK slash commands are still not wired.');
     }
 
     new Setting(containerEl)
