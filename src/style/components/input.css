@@ -109,6 +109,169 @@
   padding: 4px 6px 6px 6px;
 }
 
+.claudian-file-context-selector {
+  position: relative;
+  margin-inline-end: 4px;
+}
+
+.claudian-file-context-icon-wrapper {
+  position: relative;
+  cursor: pointer;
+}
+
+.claudian-file-context-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  color: var(--text-muted);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.claudian-file-context-icon:hover,
+.claudian-file-context-icon.active {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.claudian-file-context-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.claudian-file-context-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent, white);
+  font-size: 10px;
+  line-height: 16px;
+  text-align: center;
+  display: none;
+}
+
+.claudian-file-context-badge.visible {
+  display: block;
+}
+
+.claudian-file-context-dropdown {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  width: min(360px, 70vw);
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.2);
+  z-index: 1001;
+  padding: 10px;
+}
+
+.claudian-file-context-dropdown.visible {
+  display: block;
+}
+
+.claudian-file-context-header {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-normal);
+  margin-bottom: 6px;
+}
+
+.claudian-file-context-scope {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.claudian-file-context-current {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--background-primary-alt);
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--text-normal);
+  word-break: break-all;
+}
+
+.claudian-file-context-current-action,
+.claudian-file-context-clear,
+.claudian-file-context-item-action {
+  color: var(--interactive-accent);
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.claudian-file-context-search-wrap {
+  margin-bottom: 8px;
+}
+
+.claudian-file-context-search {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: 12px;
+}
+
+.claudian-file-context-clear {
+  margin-bottom: 8px;
+}
+
+.claudian-file-context-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.claudian-file-context-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.claudian-file-context-item:hover,
+.claudian-file-context-item.selected {
+  background: var(--background-modifier-hover);
+}
+
+.claudian-file-context-item-name {
+  font-size: 12px;
+  color: var(--text-normal);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.claudian-file-context-empty {
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 8px 0;
+}
+
 /* File indicator (attached files) */
 .claudian-file-indicator {
   display: none;
@@ -147,6 +310,20 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--text-normal);
+}
+
+.claudian-file-chip-scope {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--background-modifier-hover);
+  color: var(--text-muted);
+  font-size: 10px;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
+.claudian-file-chip.is-primary {
+  border-color: var(--interactive-accent);
 }
 
 .claudian-file-chip-remove {

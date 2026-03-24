@@ -25,22 +25,32 @@ export class FileChipsView {
     this.fileIndicatorEl.remove();
   }
 
-  renderCurrentNote(filePath: string | null): void {
+  renderCurrentNote(filePath: string | null, attachedFiles: string[] = []): void {
     this.fileIndicatorEl.empty();
 
-    if (!filePath) {
+    const orderedPaths = [
+      ...(filePath ? [filePath] : []),
+      ...attachedFiles.filter((path) => path !== filePath),
+    ];
+
+    if (orderedPaths.length === 0) {
       this.fileIndicatorEl.style.display = 'none';
       return;
     }
 
     this.fileIndicatorEl.style.display = 'flex';
-    this.renderFileChip(filePath, () => {
-      this.callbacks.onRemoveAttachment(filePath);
-    });
+    for (const path of orderedPaths) {
+      this.renderFileChip(path, () => {
+        this.callbacks.onRemoveAttachment(path);
+      }, path === filePath);
+    }
   }
 
-  private renderFileChip(filePath: string, onRemove: () => void): void {
+  private renderFileChip(filePath: string, onRemove: () => void, isPrimary = false): void {
     const chipEl = this.fileIndicatorEl.createDiv({ cls: 'claudian-file-chip' });
+    if (isPrimary) {
+      chipEl.addClass('is-primary');
+    }
 
     const iconEl = chipEl.createSpan({ cls: 'claudian-file-chip-icon' });
     setIcon(iconEl, 'file-text');
@@ -50,6 +60,11 @@ export class FileChipsView {
     const nameEl = chipEl.createSpan({ cls: 'claudian-file-chip-name' });
     nameEl.setText(filename);
     nameEl.setAttribute('title', filePath);
+
+    if (isPrimary) {
+      const scopeEl = chipEl.createSpan({ cls: 'claudian-file-chip-scope' });
+      scopeEl.setText('当前');
+    }
 
     const removeEl = chipEl.createSpan({ cls: 'claudian-file-chip-remove' });
     removeEl.setText('\u00D7');

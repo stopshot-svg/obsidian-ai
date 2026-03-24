@@ -118,6 +118,7 @@ export function createTab(options: TabCreateOptions): TabData {
     },
     ui: {
       fileContextManager: null,
+      fileContextSelector: null,
       imageContextManager: null,
       modelSelector: null,
       thinkingBudgetSelector: null,
@@ -332,6 +333,7 @@ function initializeContextManagers(tab: TabData, plugin: ClaudianPlugin): void {
     {
       getExcludedTags: () => plugin.settings.excludedTags,
       onChipsChanged: () => {
+        tab.ui.fileContextSelector?.refresh();
         tab.controllers.selectionController?.updateContextRowVisibility();
         tab.controllers.browserSelectionController?.updateContextRowVisibility();
         tab.controllers.canvasSelectionController?.updateContextRowVisibility();
@@ -520,6 +522,12 @@ function initializeInputToolbar(tab: TabData, plugin: ClaudianPlugin): void {
       enableSonnet1M: plugin.settings.enableSonnet1M,
     }),
     getEnvironmentVariables: () => plugin.getActiveEnvironmentVariables(),
+    getCurrentOpenFile: () => tab.ui.fileContextManager?.getCurrentOpenFilePath() ?? null,
+    getSelectedFiles: () => tab.ui.fileContextManager?.getSelectedFiles() ?? [],
+    getSelectableFiles: (query: string) => tab.ui.fileContextManager?.getSelectableFiles(query) ?? [],
+    onAttachFile: (filePath: string) => tab.ui.fileContextManager?.attachSelectedFile(filePath),
+    onDetachFile: (filePath: string) => tab.ui.fileContextManager?.detachSelectedFile(filePath),
+    onClearFiles: () => tab.ui.fileContextManager?.clearSelectedFiles(),
     onModelChange: async (model: string) => {
       if (resolveTabProviderId() === 'codex') {
         plugin.settings.codexModel = model === '__codex_default__' ? '' : model;
@@ -580,6 +588,7 @@ function initializeInputToolbar(tab: TabData, plugin: ClaudianPlugin): void {
     },
   });
 
+  tab.ui.fileContextSelector = toolbarComponents.fileContextSelector;
   tab.ui.modelSelector = toolbarComponents.modelSelector;
   tab.ui.thinkingBudgetSelector = toolbarComponents.thinkingBudgetSelector;
   tab.ui.contextUsageMeter = toolbarComponents.contextUsageMeter;
@@ -1182,6 +1191,8 @@ export async function destroyTab(tab: TabData): Promise<void> {
 
   // Cleanup UI components
   tab.controllers.inputController?.destroyResumeDropdown();
+  tab.ui.fileContextSelector?.destroy();
+  tab.ui.fileContextSelector = null;
   tab.ui.fileContextManager?.destroy();
   tab.ui.slashCommandDropdown?.destroy();
   tab.ui.slashCommandDropdown = null;

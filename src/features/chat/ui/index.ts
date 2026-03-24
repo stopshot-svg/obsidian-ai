@@ -6,6 +6,7 @@ export {
   ContextUsageMeter,
   createInputToolbar,
   ExternalContextSelector,
+  FileContextSelector,
   McpServerSelector,
   ModelSelector,
   PermissionToggle,

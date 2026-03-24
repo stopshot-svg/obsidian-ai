@@ -41,6 +41,12 @@ export interface ToolbarCallbacks {
   onPermissionModeChange: (mode: PermissionMode) => Promise<void>;
   getSettings: () => ToolbarSettings;
   getEnvironmentVariables?: () => string;
+  getCurrentOpenFile?: () => string | null;
+  getSelectedFiles?: () => string[];
+  getSelectableFiles?: (query: string) => string[];
+  onAttachFile?: (path: string) => void;
+  onDetachFile?: (path: string) => void;
+  onClearFiles?: () => void;
 }
 
 export class ModelSelector {
@@ -352,6 +358,167 @@ export class PermissionToggle {
     const newMode: PermissionMode = current === 'yolo' ? 'normal' : 'yolo';
     await this.callbacks.onPermissionModeChange(newMode);
     this.updateDisplay();
+  }
+}
+
+export class FileContextSelector {
+  private container: HTMLElement;
+  private iconEl: HTMLElement | null = null;
+  private badgeEl: HTMLElement | null = null;
+  private dropdownEl: HTMLElement | null = null;
+  private searchEl: HTMLInputElement | null = null;
+  private callbacks: ToolbarCallbacks;
+  private query = '';
+
+  constructor(parentEl: HTMLElement, callbacks: ToolbarCallbacks) {
+    this.callbacks = callbacks;
+    this.container = parentEl.createDiv({ cls: 'claudian-file-context-selector' });
+    this.render();
+  }
+
+  refresh(): void {
+    this.updateDisplay();
+    this.renderDropdown();
+  }
+
+  private render() {
+    this.container.empty();
+
+    const iconWrapper = this.container.createDiv({ cls: 'claudian-file-context-icon-wrapper' });
+    this.iconEl = iconWrapper.createDiv({ cls: 'claudian-file-context-icon' });
+    setIcon(this.iconEl, 'file-plus');
+    this.badgeEl = iconWrapper.createDiv({ cls: 'claudian-file-context-badge' });
+    this.updateDisplay();
+
+    iconWrapper.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (this.dropdownEl?.classList.contains('visible')) {
+        this.dropdownEl.classList.remove('visible');
+      } else {
+        this.dropdownEl?.classList.add('visible');
+      }
+      if (this.dropdownEl?.classList.contains('visible')) {
+        this.searchEl?.focus();
+      }
+    });
+
+    document.addEventListener('click', this.handleDocumentClick, true);
+
+    this.dropdownEl = this.container.createDiv({ cls: 'claudian-file-context-dropdown' });
+    this.renderDropdown();
+  }
+
+  private handleDocumentClick = (event: MouseEvent): void => {
+    const target = event.target as Node | null;
+    if (!target || this.container.contains(target)) return;
+    this.dropdownEl?.classList.remove('visible');
+  };
+
+  private updateDisplay(): void {
+    if (!this.iconEl || !this.badgeEl) return;
+
+    const selectedFiles = this.callbacks.getSelectedFiles?.() ?? [];
+    if (selectedFiles.length > 0) {
+      this.iconEl.classList.add('active');
+      this.iconEl.setAttribute('title', `当前附加上下文：${selectedFiles.length} 个文件`);
+      if (selectedFiles.length > 1) {
+        this.badgeEl.setText(String(selectedFiles.length));
+        this.badgeEl.classList.add('visible');
+      } else {
+        this.badgeEl.classList.remove('visible');
+      }
+    } else {
+      this.iconEl.classList.remove('active');
+      this.iconEl.setAttribute('title', '当前作用范围：Vault 根目录');
+      this.badgeEl.classList.remove('visible');
+    }
+  }
+
+  private renderDropdown() {
+    if (!this.dropdownEl) return;
+    this.dropdownEl.empty();
+
+    const headerEl = this.dropdownEl.createDiv({ cls: 'claudian-file-context-header' });
+    headerEl.setText('文件上下文');
+
+    const selectedFiles = this.callbacks.getSelectedFiles?.() ?? [];
+    const scopeEl = this.dropdownEl.createDiv({ cls: 'claudian-file-context-scope' });
+    scopeEl.setText(
+      selectedFiles.length > 0
+        ? `当前附加上下文：${selectedFiles.length} 个文件`
+        : '当前作用范围：Vault 根目录'
+    );
+
+    const activeFile = this.callbacks.getCurrentOpenFile?.();
+    if (activeFile) {
+      const currentFileEl = this.dropdownEl.createDiv({ cls: 'claudian-file-context-current' });
+      currentFileEl.setText(`当前文件：${activeFile}`);
+      const attachBtn = currentFileEl.createSpan({ cls: 'claudian-file-context-current-action' });
+      attachBtn.setText(selectedFiles.includes(activeFile) ? '已加入' : '加入');
+      if (!selectedFiles.includes(activeFile)) {
+        attachBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.callbacks.onAttachFile?.(activeFile);
+          this.refresh();
+        });
+      }
+    }
+
+    const searchWrap = this.dropdownEl.createDiv({ cls: 'claudian-file-context-search-wrap' });
+    this.searchEl = searchWrap.createEl('input', {
+      cls: 'claudian-file-context-search',
+      type: 'text',
+      placeholder: '搜索文件...',
+    });
+    this.searchEl.value = this.query;
+    this.searchEl.addEventListener('input', () => {
+      this.query = this.searchEl?.value ?? '';
+      this.renderDropdown();
+    });
+
+    if (selectedFiles.length > 0) {
+      const clearBtn = this.dropdownEl.createDiv({ cls: 'claudian-file-context-clear' });
+      clearBtn.setText('清空所选文件');
+      clearBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.callbacks.onClearFiles?.();
+        this.refresh();
+      });
+    }
+
+    const listEl = this.dropdownEl.createDiv({ cls: 'claudian-file-context-list' });
+    const files = this.callbacks.getSelectableFiles?.(this.query) ?? [];
+    const visibleFiles = files.slice(0, 40);
+
+    if (visibleFiles.length === 0) {
+      const emptyEl = listEl.createDiv({ cls: 'claudian-file-context-empty' });
+      emptyEl.setText(this.query ? '没有匹配的文件' : '没有可选文件');
+      return;
+    }
+
+    for (const filePath of visibleFiles) {
+      const selected = selectedFiles.includes(filePath);
+      const itemEl = listEl.createDiv({ cls: 'claudian-file-context-item' });
+      if (selected) itemEl.addClass('selected');
+      const nameEl = itemEl.createSpan({ cls: 'claudian-file-context-item-name' });
+      nameEl.setText(filePath);
+      itemEl.setAttribute('title', filePath);
+      const actionEl = itemEl.createSpan({ cls: 'claudian-file-context-item-action' });
+      actionEl.setText(selected ? '移除' : '添加');
+      itemEl.addEventListener('click', () => {
+        if (selected) {
+          this.callbacks.onDetachFile?.(filePath);
+        } else {
+          this.callbacks.onAttachFile?.(filePath);
+        }
+        this.refresh();
+      });
+    }
+  }
+
+  destroy(): void {
+    document.removeEventListener('click', this.handleDocumentClick, true);
+    this.container.remove();
   }
 }
 
@@ -1007,6 +1174,7 @@ export function createInputToolbar(
   parentEl: HTMLElement,
   callbacks: ToolbarCallbacks
 ): {
+  fileContextSelector: FileContextSelector;
   modelSelector: ModelSelector;
   thinkingBudgetSelector: ThinkingBudgetSelector;
   contextUsageMeter: ContextUsageMeter | null;
@@ -1014,6 +1182,7 @@ export function createInputToolbar(
   mcpServerSelector: McpServerSelector;
   permissionToggle: PermissionToggle;
 } {
+  const fileContextSelector = new FileContextSelector(parentEl, callbacks);
   const modelSelector = new ModelSelector(parentEl, callbacks);
   const thinkingBudgetSelector = new ThinkingBudgetSelector(parentEl, callbacks);
   const contextUsageMeter = new ContextUsageMeter(parentEl);
@@ -1021,5 +1190,5 @@ export function createInputToolbar(
   const mcpServerSelector = new McpServerSelector(parentEl);
   const permissionToggle = new PermissionToggle(parentEl, callbacks);
 
-  return { modelSelector, thinkingBudgetSelector, contextUsageMeter, externalContextSelector, mcpServerSelector, permissionToggle };
+  return { fileContextSelector, modelSelector, thinkingBudgetSelector, contextUsageMeter, externalContextSelector, mcpServerSelector, permissionToggle };
 }

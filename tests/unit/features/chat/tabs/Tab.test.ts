@@ -135,6 +135,10 @@ const createMockMcpServerSelector = () => ({
 });
 
 const createMockPermissionToggle = () => ({});
+const createMockFileContextSelector = () => ({
+  refresh: jest.fn(),
+  destroy: jest.fn(),
+});
 
 // Shared mock instances (reset in beforeEach)
 let mockFileContextManager: ReturnType<typeof createMockFileContextManager>;
@@ -149,6 +153,7 @@ let mockContextUsageMeter: ReturnType<typeof createMockContextUsageMeter>;
 let mockExternalContextSelector: ReturnType<typeof createMockExternalContextSelector>;
 let mockMcpServerSelector: ReturnType<typeof createMockMcpServerSelector>;
 let mockPermissionToggle: ReturnType<typeof createMockPermissionToggle>;
+let mockFileContextSelector: ReturnType<typeof createMockFileContextSelector>;
 let mockMessageRenderer: { scrollToBottomIfNeeded: jest.Mock; setAsyncSubagentClickCallback: jest.Mock };
 let mockSelectionController: ReturnType<typeof createMockSelectionController>;
 let mockBrowserSelectionController: ReturnType<typeof createMockBrowserSelectionController>;
@@ -214,7 +219,9 @@ jest.mock('@/features/chat/ui', () => ({
     mockExternalContextSelector = createMockExternalContextSelector();
     mockMcpServerSelector = createMockMcpServerSelector();
     mockPermissionToggle = createMockPermissionToggle();
+    mockFileContextSelector = createMockFileContextSelector();
     return {
+      fileContextSelector: mockFileContextSelector,
       modelSelector: mockModelSelector,
       thinkingBudgetSelector: mockThinkingBudgetSelector,
       contextUsageMeter: mockContextUsageMeter,

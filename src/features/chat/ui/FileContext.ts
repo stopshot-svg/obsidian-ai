@@ -39,6 +39,7 @@ export class FileContextManager {
 
   // Current note (shown as chip)
   private currentNotePath: string | null = null;
+  private activeFilePath: string | null = null;
 
   // MCP server support
   private onMcpMentionChange: ((servers: Set<string>) => void) | null = null;
@@ -64,11 +65,7 @@ export class FileContextManager {
 
     this.chipsView = new FileChipsView(this.chipsContainerEl, {
       onRemoveAttachment: (filePath) => {
-        if (filePath === this.currentNotePath) {
-          this.currentNotePath = null;
-          this.state.detachFile(filePath);
-          this.refreshCurrentNoteChip();
-        }
+        this.detachSelectedFile(filePath);
       },
       onOpenFile: async (filePath) => {
         const file = this.app.vault.getAbstractFileByPath(filePath);
@@ -108,6 +105,8 @@ export class FileContextManager {
     this.renameEventRef = this.app.vault.on('rename', (file, oldPath) => {
       if (file instanceof TFile) this.handleFileRenamed(oldPath, file.path);
     });
+
+    this.activeFilePath = this.normalizePathForVault(this.app.workspace.getActiveFile()?.path);
   }
 
   /** Returns the current note path (shown as chip). */
@@ -117,6 +116,18 @@ export class FileContextManager {
 
   getAttachedFiles(): Set<string> {
     return this.state.getAttachedFiles();
+  }
+
+  getSelectedFiles(): string[] {
+    return Array.from(this.state.getAttachedFiles());
+  }
+
+  getCurrentOpenFilePath(): string | null {
+    return this.activeFilePath;
+  }
+
+  hasSelectedFiles(): boolean {
+    return this.state.getAttachedFiles().size > 0;
   }
 
   /** Checks whether current note should be sent for this session. */
@@ -141,6 +152,7 @@ export class FileContextManager {
   /** Resets state for a new conversation. */
   resetForNewConversation() {
     this.currentNotePath = null;
+    this.activeFilePath = this.normalizePathForVault(this.app.workspace.getActiveFile()?.path);
     this.state.resetForNewConversation();
     this.refreshCurrentNoteChip();
   }
@@ -148,6 +160,7 @@ export class FileContextManager {
   /** Resets state for loading an existing conversation. */
   resetForLoadedConversation(hasMessages: boolean) {
     this.currentNotePath = null;
+    this.activeFilePath = this.normalizePathForVault(this.app.workspace.getActiveFile()?.path);
     this.state.resetForLoadedConversation(hasMessages);
     this.refreshCurrentNoteChip();
   }
@@ -155,40 +168,72 @@ export class FileContextManager {
   /** Sets current note (for restoring persisted state). */
   setCurrentNote(notePath: string | null) {
     this.currentNotePath = notePath;
-    if (notePath) {
-      this.state.attachFile(notePath);
-    }
+    this.state.clearAttachments();
+    if (notePath) this.state.attachFile(notePath);
     this.refreshCurrentNoteChip();
   }
 
-  /** Auto-attaches the currently focused file (for new sessions). */
+  /** Refreshes the current active file suggestion (does not auto-attach). */
   autoAttachActiveFile() {
     const activeFile = this.app.workspace.getActiveFile();
-    if (activeFile && !this.hasExcludedTag(activeFile)) {
-      const normalizedPath = this.normalizePathForVault(activeFile.path);
-      if (normalizedPath) {
-        this.currentNotePath = normalizedPath;
-        this.state.attachFile(normalizedPath);
-        this.refreshCurrentNoteChip();
-      }
-    }
+    this.activeFilePath = activeFile && !this.hasExcludedTag(activeFile)
+      ? this.normalizePathForVault(activeFile.path)
+      : null;
+    this.callbacks.onChipsChanged?.();
   }
 
   /** Handles file open event. */
   handleFileOpen(file: TFile) {
     const normalizedPath = this.normalizePathForVault(file.path);
     if (!normalizedPath) return;
+    this.activeFilePath = this.hasExcludedTag(file) ? null : normalizedPath;
+    this.callbacks.onChipsChanged?.();
+  }
 
-    if (!this.state.isSessionStarted()) {
-      this.state.clearAttachments();
-      if (!this.hasExcludedTag(file)) {
-        this.currentNotePath = normalizedPath;
-        this.state.attachFile(normalizedPath);
-      } else {
-        this.currentNotePath = null;
-      }
-      this.refreshCurrentNoteChip();
+  getSelectableFiles(query = ''): string[] {
+    const lowerQuery = query.trim().toLowerCase();
+    const files = this.app.vault.getFiles()
+      .filter((file) => !this.hasExcludedTag(file))
+      .map((file) => this.normalizePathForVault(file.path))
+      .filter((filePath): filePath is string => Boolean(filePath));
+
+    const filtered = lowerQuery
+      ? files.filter((filePath) => filePath.toLowerCase().includes(lowerQuery))
+      : files;
+
+    return filtered.sort((left, right) => {
+      if (left === this.activeFilePath) return -1;
+      if (right === this.activeFilePath) return 1;
+      return left.localeCompare(right);
+    });
+  }
+
+  attachSelectedFile(filePath: string): void {
+    const normalizedPath = this.normalizePathForVault(filePath);
+    if (!normalizedPath) return;
+
+    this.state.attachFile(normalizedPath);
+    if (!this.currentNotePath) {
+      this.currentNotePath = normalizedPath;
     }
+    this.refreshCurrentNoteChip();
+  }
+
+  detachSelectedFile(filePath: string): void {
+    const normalizedPath = this.normalizePathForVault(filePath);
+    if (!normalizedPath) return;
+
+    this.state.detachFile(normalizedPath);
+    if (this.currentNotePath === normalizedPath) {
+      this.currentNotePath = this.getSelectedFiles()[0] ?? null;
+    }
+    this.refreshCurrentNoteChip();
+  }
+
+  clearSelectedFiles(): void {
+    this.currentNotePath = null;
+    this.state.clearAttachments();
+    this.refreshCurrentNoteChip();
   }
 
   markFileCacheDirty() {
@@ -268,7 +313,7 @@ export class FileContextManager {
   }
 
   private refreshCurrentNoteChip(): void {
-    this.chipsView.renderCurrentNote(this.currentNotePath);
+    this.chipsView.renderCurrentNote(this.currentNotePath, this.getSelectedFiles());
     this.callbacks.onChipsChanged?.();
   }
 
@@ -282,6 +327,11 @@ export class FileContextManager {
     // Update current note path if renamed
     if (this.currentNotePath === normalizedOld) {
       this.currentNotePath = normalizedNew;
+      needsUpdate = true;
+    }
+
+    if (this.activeFilePath === normalizedOld) {
+      this.activeFilePath = normalizedNew;
       needsUpdate = true;
     }
 
@@ -308,6 +358,11 @@ export class FileContextManager {
     // Clear current note if deleted
     if (this.currentNotePath === normalized) {
       this.currentNotePath = null;
+      needsUpdate = true;
+    }
+
+    if (this.activeFilePath === normalized) {
+      this.activeFilePath = null;
       needsUpdate = true;
     }
 
