@@ -190,12 +190,23 @@ export class ClaudianSettingTab extends PluginSettingTab {
     providerHint.style.marginBottom = '0.8em';
     const providerDescriptions = isZhCN
       ? {
-        claude: 'Claude Code 运行时，功能最完整。',
-        codex: 'OpenAI / Codex 运行时，沿用同一套 Obsidian 界面，支持 Ask/Auto 权限与 CLI 管理模型。',
-        gemini: 'Google Gemini CLI 运行时，沿用同一套 Obsidian 界面，支持 Ask/Auto 权限与 Gemini CLI 管理模型。',
+        claude: 'Claude Code 运行时，MCP 通过运行时动态注入，不会改写你本地的配置文件。',
+        codex: 'OpenAI / Codex 运行时，沿用同一套 Obsidian 界面，支持 Ask/Auto 权限、CLI 管理模型，以及在官方 Codex 配置副本上叠加 MCP。',
+        gemini: 'Google Gemini CLI 运行时，沿用同一套 Obsidian 界面，支持 Ask/Auto 权限、Gemini CLI 管理模型，以及在工作区 Gemini 设置中合并受管 MCP 条目。',
       }
       : null;
     providerHint.setText(`${activeProvider.label}: ${providerDescriptions?.[activeProvider.id] ?? activeProvider.description}`);
+
+    if (activeProvider.id === 'claude') {
+      const claudeSupportHint = containerEl.createDiv({ cls: 'claudian-provider-hint' });
+      claudeSupportHint.style.fontSize = '0.9em';
+      claudeSupportHint.style.color = 'var(--text-warning)';
+      claudeSupportHint.style.marginTop = '-0.2em';
+      claudeSupportHint.style.marginBottom = '0.8em';
+      claudeSupportHint.setText(isZhCN
+        ? '当前 Claude 已支持完整聊天能力、行内编辑、指令优化、MCP、Claude SDK Slash Commands 与 AI 标题生成。MCP 通过 SDK 动态注入，不会写入额外的 provider 配置目录。'
+        : 'Current Claude support includes full chat features, inline edit, instruction refinement, MCP, Claude SDK slash commands, and AI title generation. MCP is injected dynamically through the SDK and does not write to an extra provider config directory.');
+    }
 
     if (activeProvider.id === 'codex') {
       const codexSupportHint = containerEl.createDiv({ cls: 'claudian-provider-hint' });

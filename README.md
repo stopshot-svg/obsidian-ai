@@ -115,9 +115,11 @@ Use it like an AI coding workspace inside Obsidian—read, write, edit, and sear
 
 ### Features
 
-- **Provider selection**: Choose `Claude` or `Codex` in Settings → Provider
-- **Current Codex coverage**: Chat, inline edit, instruction refinement, image attachments, external directories, command execution display, provider-aware session switching, AI title generation
-- **Current Codex gaps**: MCP integration and Claude SDK slash commands remain Claude-only for now
+- **Provider selection**: Choose `Claude`, `Codex`, or `Gemini` in Settings → Provider
+- **Current Claude coverage**: Full chat workflow, inline edit, instruction refinement, MCP, Claude SDK slash commands, AI title generation
+- **Current Codex coverage**: Chat, inline edit, instruction refinement, image attachments, external directories, command execution display, AI title generation, MCP overlay on an isolated copy of your official Codex config
+- **Current Gemini coverage**: Chat, external directories, session resume, Ask/Auto approvals, MCP merged into workspace Gemini settings
+- **Current provider gaps**: Codex/Gemini still do not support Claude SDK slash commands; Gemini inline edit and instruction refinement remain pending
 - **Inline Edit**: Select text + hotkey to edit directly in notes with word-level diff preview
 - **Instruction Mode**: Type `#` to add refined instructions to system prompt
 - **Slash Commands**: Type `/` for custom prompt templates or skills
@@ -125,14 +127,18 @@ Use it like an AI coding workspace inside Obsidian—read, write, edit, and sear
 - **Custom Agents**: Add `agent.md` files to `~/.claude/agents/` (global) or `{vault}/.claude/agents/` (vault-specific); select via `@Agents/` in chat
 - **Claude Code Plugins**: Enable plugins via Settings → Claude Code Plugins for Claude-provider workflows
 - **MCP**: Add external tools via Settings → MCP Servers; use `@mcp-server` in chat to activate
+  - `Claude`: MCP is injected at runtime via the SDK, without rewriting local config files
+  - `Codex`: MCP is layered onto an isolated copy of your official Codex config
+  - `Gemini`: plugin-managed MCP entries are merged into workspace `.gemini/settings.json`
 
 ## Configuration
 
 ### Settings
 
 - **Provider**
-  - `Active provider`: Switch between `Claude` and `Codex`
+  - `Active provider`: Switch between `Claude`, `Codex`, and `Gemini`
   - `Codex CLI path`: Optional explicit path to `codex` when auto-detection is unavailable
+  - `Gemini CLI path`: Optional explicit path to `gemini` when auto-detection is unavailable
 
 **Customization**
 - **User name**: Your name for personalized greetings
@@ -153,6 +159,10 @@ Use it like an AI coding workspace inside Obsidian—read, write, edit, and sear
 
 **MCP Servers**
 - Add/edit/verify/delete MCP server configurations with context-saving mode
+- Provider behavior differs intentionally:
+  - `Claude`: runtime injection only
+  - `Codex`: isolated config overlay based on your official Codex home/config
+  - `Gemini`: managed merge into workspace `.gemini/settings.json`
 
 **Claude Code Plugins**
 - Enable/disable Claude Code plugins discovered from `~/.claude/plugins`

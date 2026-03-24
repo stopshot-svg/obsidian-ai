@@ -22,7 +22,7 @@ export const PROVIDER_DESCRIPTORS: Record<ProviderId, ProviderDescriptor> = {
     id: 'claude',
     label: 'Claude',
     status: 'stable',
-    description: 'Current default runtime powered by Claude Code.',
+    description: 'Claude Code runtime with full MCP support injected at runtime, without rewriting local config files.',
     capabilities: {
       inlineEdit: true,
       instructionRefine: true,
@@ -36,7 +36,7 @@ export const PROVIDER_DESCRIPTORS: Record<ProviderId, ProviderDescriptor> = {
     id: 'codex',
     label: 'Codex',
     status: 'experimental',
-    description: 'OpenAI/Codex runtime using the same Obsidian UI, with Ask/Auto approvals and optional Codex CLI-managed model selection.',
+    description: 'OpenAI/Codex runtime using the same Obsidian UI, with Ask/Auto approvals, CLI-managed model selection, and MCP layered onto an isolated copy of your official Codex config.',
     capabilities: {
       inlineEdit: true,
       instructionRefine: true,
@@ -50,7 +50,7 @@ export const PROVIDER_DESCRIPTORS: Record<ProviderId, ProviderDescriptor> = {
     id: 'gemini',
     label: 'Gemini',
     status: 'experimental',
-    description: 'Google Gemini CLI runtime using the shared Obsidian UI, with Ask/Auto approvals and optional Gemini CLI-managed model selection.',
+    description: 'Google Gemini CLI runtime using the shared Obsidian UI, with Ask/Auto approvals, CLI-managed model selection, and managed MCP entries merged into workspace Gemini settings.',
     capabilities: {
       inlineEdit: false,
       instructionRefine: false,
